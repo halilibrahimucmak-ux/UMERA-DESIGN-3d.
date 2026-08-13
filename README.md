@@ -7,7 +7,7 @@
 - Sepete ekleme sırasında `/api/abajur-price` seçimi sunucuda yeniden doğrular ve fiyatı aynı geometri üzerinden hesaplar.
 - Abajur, standart ürünlerle aynı sepette ve aynı sipariş formunda satın alınabilir.
 - Siparişin tam üretim yapılandırması Google Sheets `Orders` sayfasındaki `yapilandirma_json` sütununda saklanır.
-- Yönetici panelinde her abajur için **Üretim JSON** düğmesi görünür. İndirilen dosya `node lib/siparis-stl.mjs siparis.json ./cikti` komutuyla STL ve iş emrine dönüştürülür.
+- Yönetici panelinde her abajur için **STL İndir** düğmesi görünür. Baskıya hazır STL, müşterinin değiştiremeyeceği şekilde siparişte kayıtlı üretim yapılandırmasından sunucuda oluşturulur ve doğrudan indirilir; ara JSON dosyası gerekmez.
 - Müşteri STL dosyasını indiremez; üretim modeli yalnızca kaydedilen sipariş yapılandırmasından oluşturulur.
 
 ### Orders sütunları
