@@ -421,11 +421,491 @@ function App() {
     try {
       const response = await api('/api/orders', {
         method: 'PUT',
-        body: JSON.stringify({ëŞü¶‰ËkºwµçJÜ€©Q…¡µ¥¹¤ÏñÉ”ğ½Íµ…±°ø(€€€€€€ğ½‘¥Øø(€€€€ğ½…ÉÑ¥±”ø(€€¤ì)ô()™Õ¹Ñ¥½¸AÉ½•ÍÍM•Ñ¥½¸¡ì½¹MÑ…ÉĞô¤ì(€½¹ÍĞÍÑ•ÁÌ€ôl(€€€lœÀÄœ°€½Ñ¿}É…›Å»ÄŸÙ¹‘•Èœ°€I•™•É…¹ÌŸÙÉÍ•±±•É¤°ƒÙ³ŸñçğÙ”¥ÍÑ•‘§}¥¸ƒÙé•±±¥­±•É¤Á…å±‡|¸t°(€€€lœÀÈœ°€Q…±•‰¥¹¤¥¹•±•å•±¥´œ°€ŸqÉ•Ñ¥±•‰¥±¥É±¥¬°µ…±é•µ”Ù”‘•Ñ…å±…ËÄ‘—}•É±•¹‘¥É•±¥´¸t°(€€€lœÀÌœ°€Q•­±¥™¤½¹…å±„œ°€¥å…ĞÙ”Ñ…¡µ¥¹¤ƒñÉ•Ñ¥´ÏñÉ•Í¥¹¤Í…¹„¥±•Ñ•±¥´¸t°(€€€lœÀĞœ°€ŸqÉ•Ñ¥µ”‰‡}±…å…³Å´œ°€=¹…çÅ¹‘…¸Í½¹É„ƒñËñ»ğƒÙé•¹±”¡…ëÅÉ±…å…³Å´¸t(€tì(€É•ÑÕÉ¸€ñÍ•Ñ¥½¸±…ÍÍ9…µ”ô‰İÉ…ÀÁÉ½•ÍÍM•Ñ¥½¸ˆøñM•Ñ¥½¹Q¥Ñ±”•å•‰É½Üô‹Yi0QMI%4OqIÀˆÑ¥Ñ±”õìğùÙÉĞ…“Åµ‘„€ñ•´ù™¥­É¥¹‘•¸ƒñËñ¹”¸ğ½•´øğ¼ùôÑ•áĞô‰¥å…ÓÄ‰•±±¤½±µ…å…¸ƒÙé•°Ñ…±•Á±•ÈÍ…ÓÇ|Í¥Á…É§}±•É¥¹‘•¸…åËÄÑ…­¥À•‘¥±¥È¸ˆ€¼øñ‘¥Ø±…ÍÍ9…µ”ô‰ÁÉ½•ÍÍÉ¥ˆùíÍÑ•ÁÌ¹µ…À ¡m¹Õµ‰•È°Ñ¥Ñ±”°Ñ•áÑt¤€ôø€ñ‘¥Ø±…ÍÍ9…µ”ô‰ÁÉ½•ÍÍ…Éˆ­•äõí¹Õµ‰•ÉôøñÍÁ…¸ùí¹Õµ‰•Éôğ½ÍÁ…¸øñ ÌùíÑ¥Ñ±•ôğ½ ÌøñÀùíÑ•áÑôğ½Àøğ½‘¥Øø¥ôğ½‘¥Øøñ‰ÕÑÑ½¸±…ÍÍ9…µ”ô‰ÁÉ¥µ…ÉäÁÉ½•ÍÍÑ„ˆ½¹±¥¬õí½¹MÑ…ÉÑôûYé•°Q…Í…ËÅ´Q…±•‰¤=±×}ÑÕÈƒŠHğ½‰ÕÑÑ½¸øğ½Í•Ñ¥½¸øì)ô()™Õ¹Ñ¥½¸EM•Ñ¥½¸ ¤ì(€½¹ÍĞ™…ÅÌ€ôl(€€€l‰…©ÕÈÑ…Í…ËÅ·Å·Ä¹…ÏÅ°Í¥Á…É§|Ù•É¥É¥´üœ°€‰…©ÕÈQ…Í…É±„…±…»Å¹‘„ƒÙ³Ÿğ°ÁÉ½™¥°°‘•Í•¸°µ…±é•µ”°É•¹¬Ù”‘ÕäÑ¥Á¥¹¤Í—œ¸ƒqÉ•Ñ¥µ”ÕåÕ¸Ñ…Í…ËÅ·Å»ÄÍ•Á•Ñ”•­±•‘§}¥¹‘”™¥å…ĞÍÕ¹ÕÕ‘„å•¹¥‘•¸‘¿}ÉÕ±…»ÅÈÙ”¹½Éµ…°Í¥Á…É§|…¯ÇÅ¹„•­±•¹¥È¸t°(€€€lŸqËñ¹±•È¡…ëÅÈÍÑ½¬µÔüœ°€	…ëÄƒñËñ¹±•ÈÍÑ½­Ñ…¸°‰…ëÄƒñËñ¹±•ÈÍ¥Á…É§|ƒñé•É¥¹”ƒñÉ•Ñ¥±¥È¸ñ¹•°ÍÑ½¬‰¥±¥Í¤ƒñËñ¸­…ÉÓÅ¹‘„ŸÙËñ»ñÈ¸t°(€€€lŸqÉ•Ñ¥´¹”­…‘…ÈÏñÉ•Èüœ°€5½‘•°°…‘•ĞÙ”‰…Í¯ÄÏñÉ•Í¥¹”ŸÙÉ”‘—}§}¥È¸MÑ…¹‘…ÉĞƒñËñ¹±•É‘”Ñ…¡µ¥¹¤ÏñÉ”ƒ¿}Õ¹±Õ­±„€ËŠLÔ§|Ÿñ»ñ“ñÈìÍ¥Á…É§|ƒÙ¹•Í¥¹‘”Ñ•å¥Ğ•‘¥±¥È¸t°(€€€lI•¹¬Ù•å„‰½åÕĞ‘—}§}Ñ¥É•‰¥±¥Èµ¥å¥´üœ°€UåÕ¸½±…¸µ½‘•±±•É‘”É•¹¬Ù”ƒÙ³Ÿğ‘—}§}¥­±§}¤å…ÃÅ±…‰¥±¥È¸ƒqËñ¸‘•Ñ…çÅ¹‘…¸Ù•å„]¡…ÑÍÁÀƒñé•É¥¹‘•¸‰¥±¤…±…‰¥±¥ÉÍ¥¸¸t°(€€€lŸYé•°Ñ…Í…ËÅ´™¥å…ÓÄ¹…ÏÅ°‰•±¥É±•¹¥Èüœ°€Ù¹‘•É‘§}¥¸™½Ñ¿}É…˜°ƒÙ³Ÿğ°µ…±é•µ”°‰…Í¯ÄÏñÉ•Í¤Ù”…‘•Ğ‘—}•É±•¹‘¥É¥±•É•¬Ñ•­±¥˜½±×}ÑÕÉÕ±ÕÈ¸t(€tì(€É•ÑÕÉ¸€ñÍ•Ñ¥½¸±…ÍÍ9…µ”ô‰İÉ…À™…ÅM•Ñ¥½¸ˆøñM•Ñ¥½¹Q¥Ñ±”•å•‰É½Üô‰M%,M=IU18M=IU1HˆÑ¥Ñ±”õìğùM¥Á…É§}Ñ•¸ƒÙ¹”€ñ•´ùµ•É…¬•‘¥±•¹±•È¸ğ½•´øğ¼ùô€¼øñ‘¥Ø±…ÍÍ9…µ”ô‰™…ÅÉ¥ˆùí™…ÅÌ¹µ…À ¡mÅÕ•ÍÑ¥½¸°…¹Íİ•Ét¤€ôø€ñ‘•Ñ…¥±Ì­•äõíÅÕ•ÍÑ¥½¹ôøñÍÕµµ…ÉäùíÅÕ•ÍÑ¥½¹ôñÍÁ…¸ø¬ğ½ÍÁ…¸øğ½ÍÕµµ…ÉäøñÀùí…¹Íİ•Éôğ½Àøğ½‘•Ñ…¥±Ìø¥ôğ½‘¥Øøğ½Í•Ñ¥½¸øì)ô()™Õ¹Ñ¥½¸%µ…•1¥¡Ñ‰½à¡ì¥µ…”°±½Í”ô¤ì(€É•ÑÕÉ¸€ñ‘¥Ø±…ÍÍ9…µ”ô‰¥µ…•1¥¡Ñ‰½àˆ½¹±¥¬õí±½Í•ôÉ½±”ô‰‘¥…±½œˆ…É¥„µµ½‘…°ô‰ÑÉÕ”ˆ…É¥„µ±…‰•°ô‹qËñ¸ŸÙÉÍ•±¤ˆøñ‰ÕÑÑ½¸±…ÍÍ9…µ”ô‰¥µ…•1¥¡Ñ‰½á±½Í”ˆ½¹±¥¬õí±½Í•ô…É¥„µ±…‰•°ô‰-…Á…Ğˆû\ğ½‰ÕÑÑ½¸øñ¥µœÍÉŒõí¥µ…”¹ÕÉ±ô…±Ğõí¥µ…”¹¹…µ•ô½¹±¥¬õí•Ù•¹Ğ€ôø•Ù•¹Ğ¹ÍÑ½ÁAÉ½Á……Ñ¥½¸ ¥ô€¼øñ‘¥Ø±…ÍÍ9…µ”ô‰¥µ…•1¥¡Ñ‰½á…ÁÑ¥½¸ˆùí¥µ…”¹¹…µ•ôğ½‘¥Øøğ½‘¥Øøì)ô()™Õ¹Ñ¥½¸¥•±¡ì±…‰•°°¹…µ”°€¸¸¹ÁÉ½ÁÌô¤ì(€É•ÑÕÉ¸€ñ±…‰•°ùí±…‰•±ôñ¥¹ÁÕĞ¹…µ”õí¹…µ•ôì¸¸¹ÁÉ½ÁÍô€¼øğ½±…‰•°øì)ô()™Õ¹Ñ¥½¸5½‘…°¡ìÑ¥Ñ±”°±½Í”°¡¥±‘É•¸°İ¥‘”€ô™…±Í”ô¤ì(€É•ÑÕÉ¸€ñ‘¥Ø±…ÍÍ9…µ”ô‰µ½‘…±	…¬ˆ½¹5½ÕÍ•½İ¸õí•Ù•¹Ğ€ôøì¥˜€¡•Ù•¹Ğ¹Ñ…É•Ğ€ôôô•Ù•¹Ğ¹ÕÉÉ•¹ÑQ…É•Ğ¤±½Í” ¤ìõôøñ‘¥Ø±…ÍÍ9…µ”õíİ¥‘”€ü€µ½‘…°İ¥‘”œ€è€µ½‘…°ôøñ‘¥Ø±…ÍÍ9…µ”ô‰µ½‘…±!•…ˆøñ ÌùíÑ¥Ñ±•ôğ½ Ìøñ‰ÕÑÑ½¸ÑåÁ”ô‰‰ÕÑÑ½¸ˆ½¹±¥¬õí±½Í•ô…É¥„µ±…‰•°ô‰-…Á…Ğˆû\ğ½‰ÕÑÑ½¸øğ½‘¥Øùí¡¥±‘É•¹ôğ½‘¥Øøğ½‘¥Øøì)ô()™Õ¹Ñ¥½¸‘µ¥¹A…¹•°¡ìÍÑ…ÑÌ°½É‘•ÉÌ°ÕÍÑ½µ=É‘•ÉÌ°ÁÉ½‘ÕÑÌ°™½É´°Í•Ñ½É´°•‘¥Ğ°¹•İAÉ½‘ÕĞ°•‘¥ÑAÉ½‘ÕĞ°Í…Ù•AÉ½‘ÕĞ°‘•±AÉ½‘ÕĞ°ÕÁ±½…‘%µ…”°¥µ…•UÁ±½…‘¥¹œ°±½…‘…Í¡‰½…É°±½½ÕĞ°ÕÁ‘…Ñ•=É‘•È°¹½Ñ¥™å=É‘•Èô¤ì(€½¹ÍĞmÕÍÑ½µ¥±Ñ•È°Í•ÑÕÍÑ½µ¥±Ñ•Ét€ôÕÍ•MÑ…Ñ” Sñ·ğœ¤ì(€½¹ÍĞmÍ•±•Ñ•‘ÕÍÑ½´°Í•ÑM•±•Ñ•‘ÕÍÑ½µt€ôÕÍ•MÑ…Ñ”¡¹Õ±°¤ì(€½¹ÍĞmÍÑ±1½…‘¥¹œ°Í•ÑMÑ±1½…‘¥¹t€ôÕÍ•MÑ…Ñ” œœ¤ì((€…Íå¹Œ™Õ¹Ñ¥½¸ÕÁ‘…Ñ•ÕÍÑ½´¡½É‘•È°ÍÑ…ÑÕÌ°ÅÕ½Ñ”€ô½É‘•È¹ÅÕ½Ñ”¤ì(€€€ÑÉäì(€€€€€½¹ÍĞÉ•ÍÁ½¹Í”€ô…İ…¥Ğ…Á¤ œ½…Á¤½ÕÍÑ½´µ½É‘•ÉÌœ°ì(€€€€€€€µ•Ñ¡½è€AUPœ°(€€€€€€€‰½‘äè)M=8¹ÍÑÉ¥¹¥™ä¡ìÉ•ÅÕ•ÍÑ9¼è½É‘•È¹É•ÅÕ•ÍÑ9¼°ÍÑ…ÑÕÌ°ÅÕ½Ñ”ô¤(€€€€€ô¤ì(€€€€€½¹ÍĞÕÁ‘…Ñ•€ôì€¸¸¹½É‘•È°ÍÑ…ÑÕÌèÉ•ÍÁ½¹Í”¹½É‘•È¹ÍÑ…ÑÕÌ°ÅÕ½Ñ”èÉ•ÍÁ½¹Í”¹½É‘•È¹ÅÕ½Ñ”ôì(€€€€€Í•ÑM•±•Ñ•‘ÕÍÑ½´¡ÕÉÉ•¹Ğ€ôøÕÉÉ•¹Ğü¹É•ÅÕ•ÍÑ9¼€ôôô½É‘•È¹É•ÅÕ•ÍÑ9¼€üÕÁ‘…Ñ•€èÕÉÉ•¹Ğ¤ì(€€€€€…İ…¥Ğ±½…‘…Í¡‰½…É ¤ì(€€€€€…±•ÉĞ ŸYé•°Ñ…Í…ËÅ´Ñ…±•‰¤Ÿñ¹•±±•¹‘¤¸œ¤ì(€€€ô…Ñ €¡•ÉÉ½È¤ì(€€€€€…±•ÉĞ¡•ÉÉ½È¹µ•ÍÍ…”¤ì(€€€ô(€ô((€™Õ¹Ñ¥½¸ÕÍÑ½µ]¡…ÑÍÁÀ¡½É‘•È¤ì(€€€½¹ÍĞ‘¥¥ÑÌ€ôMÑÉ¥¹œ¡½É‘•È¹Á¡½¹”ñğ€œœ¤¹É•Á±…” ½q½œ°€œœ¤ì(€€€¥˜€ …‘¥¥ÑÌ¤É•ÑÕÉ¸…±•ÉĞ 7ó}Ñ•É¥¹¥¸Ñ•±•™½¸¹Õµ…É…ÏÄ‰Õ±Õ¹…µ…“Ä¸œ¤ì(€€€½¹ÍĞÁ¡½¹”€ô‘¥¥ÑÌ¹ÍÑ…ÉÑÍ]¥Ñ  œäÀœ¤€ü‘¥¥ÑÌ€è‘¥¥ÑÌ¹ÍÑ…ÉÑÍ]¥Ñ  œÀœ¤€ü€äÀ‘í‘¥¥ÑÌ¹Í±¥” Ä¥õ€€è‘¥¥ÑÌì(€€€½¹ÍĞÑ•áĞ€ô5•É¡…‰„€‘í½É‘•È¹¹…µ•ô±q¹q¹U5I•Í¥¸€ÍƒÙé•°Ñ…Í…ËÅ´Ñ…±•‰¥¹¥è€ ‘í½É‘•È¹É•ÅÕ•ÍÑ9½ô¤¥¹•±•¹µ§}Ñ¥È¹q¹ÕÉÕ´è€‘í½É‘•È¹ÍÑ…ÑÕÍô‘í½É‘•È¹ÅÕ½Ñ”€üq¹Q•­±¥˜è€‘íµ½¹•ä¡½É‘•È¹ÅÕ½Ñ”¥õ€€è€œõq¹q¹U5I•Í¥¸€Í€ì(€€€İ¥¹‘½Ü¹½Á•¸¡¡ÑÑÁÌè¼½İ„¹µ”¼‘íÁ¡½¹•ôıÑ•áĞô‘í•¹½‘•UI%½µÁ½¹•¹Ğ¡Ñ•áĞ¥õ€°€}‰±…¹¬œ¤ì(€ô((€…Íå¹Œ™Õ¹Ñ¥½¸‘½İ¹±½…‘‰…©ÕÉAÉ½‘ÕÑ¥½¸¡½É‘•È°}½¹™¥ÕÉ…Ñ¥½¸°¥¹‘•à¤ì(€€€½¹ÍĞ­•ä€ô€‘í½É‘•È¹½É‘•É9½ô´‘í¥¹‘•áõ€ì(€€€¥˜€¡ÍÑ±1½…‘¥¹œ¤É•ÑÕÉ¸ì(€€€Í•ÑMÑ±1½…‘¥¹œ¡­•ä¤ì(€€€ÑÉäì(€€€€€½¹ÍĞÉ•ÍÁ½¹Í”€ô…İ…¥Ğ™•Ñ  œ½…Á¤½½É‘•ÈµÍÑ°œ°ì(€€€€€€€µ•Ñ¡½è€A=MPœ°(€€€€€€€¡•…‘•ÉÌèì€½¹Ñ•¹ĞµQåÁ”œè€…ÁÁ±¥…Ñ¥½¸½©Í½¸œô°(€€€€€€€‰½‘äè)M=8¹ÍÑÉ¥¹¥™ä¡ì½É‘•É9¼è½É‘•È¹½É‘•É9¼°½¹™¥ÕÉ…Ñ¥½¹%¹‘•àè¥¹‘•àô¤(€€€€€ô¤ì(€€€€€¥˜€ …É•ÍÁ½¹Í”¹½¬¤ì(€€€€€€€½¹ÍĞ‘…Ñ„€ô…İ…¥ĞÉ•ÍÁ½¹Í”¹©Í½¸ ¤¹…Ñ   ¤€ôø€¡íô¤¤ì(€€€€€€€Ñ¡É½Ü¹•ÜÉÉ½È¡‘…Ñ„¹•ÉÉ½Èñğ€MQ0½±×}ÑÕÉÕ±…µ…“Ä¸œ¤ì(€€€€€ô(€€€€€½¹ÍĞ‰±½ˆ€ô…İ…¥ĞÉ•ÍÁ½¹Í”¹‰±½ˆ ¤ì(€€€€€¥˜€¡‰±½ˆ¹Í¥é”€ğ€àĞ¤Ñ¡É½Ü¹•ÜÉÉ½È MQ0‘½Íå…ÏÄ—•ÉÍ¥èÙ•å„‰¿|¸œ¤ì(€€€€€½¹ÍĞ‘¥ÍÁ½Í¥Ñ¥½¸€ôÉ•ÍÁ½¹Í”¹¡•…‘•ÉÌ¹•Ğ ½¹Ñ•¹Ğµ¥ÍÁ½Í¥Ñ¥½¸œ¤ñğ€œœì(€€€€€½¹ÍĞµ…Ñ €ô‘¥ÍÁ½Í¥Ñ¥½¸¹µ…Ñ  ½™¥±•¹…µ”ôˆ¡mx‰t¬¤ˆ½¤¤ì(€€€€€½¹ÍĞ™¥±•9…µ”€ôµ…Ñ ü¹lÅtñğ€‘í½É‘•È¹½É‘•É9½ôµ…‰…©ÕÈ´‘í¥¹‘•à€¬€Åô¹ÍÑ±€ì(€€€€€½¹ÍĞÕÉ°€ôUI0¹É•…Ñ•=‰©•ÑUI0¡‰±½ˆ¤ì(€€€€€½¹ÍĞ±¥¹¬€ô‘½Õµ•¹Ğ¹É•…Ñ•±•µ•¹Ğ „œ¤ì(€€€€€±¥¹¬¹¡É•˜€ôÕÉ°ì(€€€€€±¥¹¬¹‘½İ¹±½…€ô™¥±•9…µ”ì(€€€€€‘½Õµ•¹Ğ¹‰½‘ä¹…ÁÁ•¹‘¡¥±¡±¥¹¬¤ì(€€€€€±¥¹¬¹±¥¬ ¤ì(€€€€€±¥¹¬¹É•µ½Ù” ¤ì(€€€€€Í•ÑQ¥µ•½ÕĞ  ¤€ôøUI0¹É•Ù½­•=‰©•ÑUI0¡ÕÉ°¤°€ÄÀÀÀ¤ì(€€€ô…Ñ €¡•ÉÉ½È¤ì(€€€€€…±•ÉĞ¡•ÉÉ½È¹µ•ÍÍ…”¤ì(€€€ô™¥¹…±±äì(€€€€€Í•ÑMÑ±1½…‘¥¹œ œœ¤ì(€€€ô(€ô((€½¹ÍĞ™¥±Ñ•É•‘ÕÍÑ½´€ôÕÍÑ½µ=É‘•ÉÌ¹™¥±Ñ•È¡½É‘•È€ôøÕÍÑ½µ¥±Ñ•È€ôôô€Sñ·ğœñğ½É‘•È¹ÍÑ…ÑÕÌ€ôôôÕÍÑ½µ¥±Ñ•È¤ì((€É•ÑÕÉ¸€ (€€€€ñµ…¥¸±…ÍÍ9…µ”ô‰…‘µ¥¹A…”İÉ…Àˆø(€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰…‘µ¥¹Q½Àˆøñ‘¥Øøñ‘¥Ø±…ÍÍ9…µ”ô‰•å•‰É½ÜˆùgY9SÁ45I-kÀğ½‘¥Øøñ ÄùU5I€ñ•´ù‘µ¥¸ğ½•´øğ½ ÄøñÀûqËñ¹±•É¥¹¤°Í¥Á…É§}±•É¥¹¤Ù”ƒÙé•°Ñ…Í…ËÅ´Ñ…±•Á±•É¥¹¤Ñ•¬å•É‘•¸çÙ¹•Ğ¸ğ½Àøğ½‘¥Øøñ‘¥Ø±…ÍÍ9…µ”ô‰…‘µ¥¹Ñ¥½¹Ìˆøñ‰ÕÑÑ½¸±…ÍÍ9…µ”ô‰¡½ÍĞˆ½¹±¥¬õí±½…‘…Í¡‰½…É‘ôûŠìe•¹¥±”ğ½‰ÕÑÑ½¸øñ‰ÕÑÑ½¸±…ÍÍ9…µ”ô‰¡½ÍĞˆ½¹±¥¬õí±½½ÕÑôûÅ¯Ç|ğ½‰ÕÑÑ½¸øğ½‘¥Øøğ½‘¥Øø(€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰ÍÑ…ÑÌˆùíl(€€€€€€€lQ½Á±…´ƒqËñ¸œ°ÁÉ½‘ÕÑÌ¹±•¹Ñ °€ŸÂ~N˜t°(€€€€€€€lQ½Á±…´M¥Á…É§|œ°ÍÑ…ÑÌü¹Ñ½Ñ…±=É‘•ÉÌ€üü€ŸŠPœ°€ŸÂ~øt°(€€€€€€€l	Ôäœ°ÍÑ…ÑÌü¹µ½¹Ñ¡=É‘•ÉÌ€üü€ŸŠPœ°€ŸÂ~Nt°(€€€€€€€lQ½Á±…´¥É¼œ°ÍÑ…ÑÌ€üµ½¹•ä¡ÍÑ…ÑÌ¹Ñ½Ñ…±I•Ù•¹Õ”¤€è€ŸŠPœ°€ŸŠ
-èt°(€€€€€€€l	•­±•å•¸œ°ÍÑ…ÑÌü¹Á•¹‘¥¹œ€üü€ŸŠPœ°€ŸŠ>Ìt°(€€€€€€€lŸYé•°Q…Í…ËÅ´œ°ÕÍÑ½µ=É‘•ÉÌ¹±•¹Ñ °€ŸÂ~: t(€€€€€t¹µ…À¡¥Ñ•´€ôø€ñ‘¥Ø±…ÍÍ9…µ”ô‰ÍÑ…Ğˆ­•äõí¥Ñ•µlÁuôøñÍÁ…¸ùí¥Ñ•µlÉuôğ½ÍÁ…¸øñÍµ…±°ùí¥Ñ•µlÁuôğ½Íµ…±°øñˆùí¥Ñ•µlÅuôğ½ˆøğ½‘¥Øø¥ôğ½‘¥Øø((€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰…‘µ¥¹É¥ˆø(€€€€€€€€ñÍ•Ñ¥½¸±…ÍÍ9…µ”ô‰Á…¹•°ˆøñ‘¥Ø±…ÍÍ9…µ”ô‰Á…¹•±!•…ˆøñ‘¥ØøñˆûqËñ¸gÙ¹•Ñ¥µ¤ğ½ˆøñÍÁ…¸ù½½±”M¡••ÑÌ¥±”Í•¹­É½¸ğ½ÍÁ…¸øğ½‘¥Øøñ‰ÕÑÑ½¸±…ÍÍ9…µ”ô‰ÁÉ¥µ…Éäˆ½¹±¥¬õí¹•İAÉ½‘ÕÑôø¬e•¹¤ƒqËñ¸ğ½‰ÕÑÑ½¸øğ½‘¥Øøñ‘¥Ø±…ÍÍ9…µ”ô‰ÁÉ½‘ÕÑ‘µ¥¸ˆùíÁÉ½‘ÕÑÌ¹µ…À¡ÁÉ½‘ÕĞ€ôø€ñ‘¥Ø±…ÍÍ9…µ”ô‰ÁI½Üˆ­•äõíÁÉ½‘ÕĞ¹¥‘ôøñ¥µœÍÉŒõíÁÉ½‘ÕĞ¹¥µ…”ñğ€œ½±½¼µµ…É¬¹İ•‰Àô…±Ğôˆˆ€¼øñ‘¥ØøñˆùíÁÉ½‘ÕĞ¹¹…µ•ôğ½ˆøñÍÁ…¸ùíÁÉ½‘ÕĞ¹…Ñ•½Éåôƒ
-Üíµ½¹•ä¡ÁÉ½‘ÕĞ¹ÁÉ¥”¥ôƒ
-ÜMÑ½¬íÁÉ½‘ÕĞ¹ÍÑ½­ôğ½ÍÁ…¸øğ½‘¥Øøñ‰ÕÑÑ½¸½¹±¥¬õì ¤€ôø•‘¥ÑAÉ½‘ÕĞ¡ÁÉ½‘ÕĞ¥ôùñé•¹±”ğ½‰ÕÑÑ½¸øñ‰ÕÑÑ½¸±…ÍÍ9…µ”ô‰‘…¹•Èˆ½¹±¥¬õì ¤€ôø‘•±AÉ½‘ÕĞ¡ÁÉ½‘ÕĞ¹¥¥ôùM¥°ğ½‰ÕÑÑ½¸øğ½‘¥Øø¥ôğ½‘¥Øøğ½Í•Ñ¥½¸ø(€€€€€€€€ñÍ•Ñ¥½¸±…ÍÍ9…µ”ô‰Á…¹•°•‘¥Ñ½Èˆøñ‘¥Ø±…ÍÍ9…µ”ô‰Á…¹•±!•…ˆøñ‘¥Øøñˆùí•‘¥Ğ€ü€ŸqËñ»ğñé•¹±”œ€è€e•¹¤ƒqËñ¸ôğ½ˆøñÍÁ…¸ù	¥±¥±•É¤¥É¥À­…å‘•Ğğ½ÍÁ…¸øğ½‘¥Øøğ½‘¥Øøñ™½É´±…ÍÍ9…µ”ô‰™½É´ˆ½¹MÕ‰µ¥ĞõíÍ…Ù•AÉ½‘ÕÑôøñ¥•±±…‰•°ô‹qËñ¸…“Ä€¨ˆÙ…±Õ”õí™½É´¹¹…µ•ô½¹¡…¹”õí•Ù•¹Ğ€ôøÍ•Ñ½É´¡ì€¸¸¹™½É´°¹…µ”è•Ù•¹Ğ¹Ñ…É•Ğ¹Ù…±Õ”ô¥ôÉ•ÅÕ¥É•€¼øñ±…‰•°ù-…Ñ•½É¤ñÍ•±•ĞÙ…±Õ”õí™½É´¹…Ñ•½Éåô½¹¡…¹”õí•Ù•¹Ğ€ôøÍ•Ñ½É´¡ì€¸¸¹™½É´°…Ñ•½Éäè•Ù•¹Ğ¹Ñ…É•Ğ¹Ù…±Õ”ô¥ôùíQL¹™¥±Ñ•È¡¥Ñ•´€ôø¥Ñ•´€„ôô€Sñ·ğœ¤¹µ…À¡…Ñ•½Éä€ôø€ñ½ÁÑ¥½¸­•äõí…Ñ•½Éåôùí…Ñ•½Éåôğ½½ÁÑ¥½¸ø¥ôğ½Í•±•Ğøğ½±…‰•°øñ‘¥Ø±…ÍÍ9…µ”ô‰Ñİ¼ˆøñ¥•±±…‰•°ô‰¥å…Ğ€¡Q0¤€¨ˆÑåÁ”ô‰¹Õµ‰•Èˆµ¥¸ôˆÀˆÙ…±Õ”õí™½É´¹ÁÉ¥•ô½¹¡…¹”õí•Ù•¹Ğ€ôøÍ•Ñ½É´¡ì€¸¸¹™½É´°ÁÉ¥”è•Ù•¹Ğ¹Ñ…É•Ğ¹Ù…±Õ”ô¥ôÉ•ÅÕ¥É•€¼øñ¥•±±…‰•°ô‰MÑ½¬€¨ˆÑåÁ”ô‰¹Õµ‰•Èˆµ¥¸ôˆÀˆÙ…±Õ”õí™½É´¹ÍÑ½­ô½¹¡…¹”õí•Ù•¹Ğ€ôøÍ•Ñ½É´¡ì€¸¸¹™½É´°ÍÑ½¬è•Ù•¹Ğ¹Ñ…É•Ğ¹Ù…±Õ”ô¥ôÉ•ÅÕ¥É•€¼øğ½‘¥Øøñ±…‰•°ûqËñ¸ÙÉÍ•±¤ñ¥¹ÁÕĞÑåÁ”ô‰™¥±”ˆ…•ÁĞô‰¥µ…”½©Á•œ±¥µ…”½Á¹œ±¥µ…”½İ•‰Àˆ½¹¡…¹”õíÕÁ±½…‘%µ…•ô€¼øğ½±…‰•°ùí¥µ…•UÁ±½…‘¥¹œ€˜˜€ñ‘¥Ø±…ÍÍ9…µ”ô‰¹½Ñ¥”ˆùÙÉÍ•°çñ­±•¹¥å½È¸¸¸ğ½‘¥Øùõí™½É´¹¥µ…”€˜˜€ñ¥µœ±…ÍÍ9…µ”ô‰ÁÉ•Ù¥•ÜˆÍÉŒõí™½É´¹¥µ…•ô…±Ğô‹Y¹¥é±•µ”ˆ€¼ùôñ¥•±±…‰•°ô‰ÙÉÍ•°UI0€¡½ÁÍ¥å½¹•°¤ˆÙ…±Õ”õí™½É´¹¥µ…•ô½¹¡…¹”õí•Ù•¹Ğ€ôøÍ•Ñ½É´¡ì€¸¸¹™½É´°¥µ…”è•Ù•¹Ğ¹Ñ…É•Ğ¹Ù…±Õ”ô¥ô€¼øñ±…‰•°ùŸÅ­±…µ„ñÑ•áÑ…É•„É½İÌôˆĞˆÙ…±Õ”õí™½É´¹‘•ÍÉ¥ÁÑ¥½¹ô½¹¡…¹”õí•Ù•¹Ğ€ôøÍ•Ñ½É´¡ì€¸¸¹™½É´°‘•ÍÉ¥ÁÑ¥½¸è•Ù•¹Ğ¹Ñ…É•Ğ¹Ù…±Õ”ô¥ô€¼øğ½±…‰•°øñ‘¥Ø±…ÍÍ9…µ”ô‰Ñİ¼ˆøñ‰ÕÑÑ½¸±…ÍÍ9…µ”ô‰ÁÉ¥µ…Éäˆùí•‘¥Ğ€ü€—}§}¥­±¥­±•É¤-…å‘•Ğœ€è€ŸqËñ»ğe…çÅ¹±„ôğ½‰ÕÑÑ½¸øñ‰ÕÑÑ½¸ÑåÁ”ô‰‰ÕÑÑ½¸ˆ±…ÍÍ9…µ”ô‰¡½ÍĞˆ½¹±¥¬õí¹•İAÉ½‘ÕÑôùQ•µ¥é±”ğ½‰ÕÑÑ½¸øğ½‘¥Øøğ½™½É´øğ½Í•Ñ¥½¸ø(€€€€€€ğ½‘¥Øø((€€€€€€ñÍ•Ñ¥½¸±…ÍÍ9…µ”ô‰Á…¹•°½É‘•ÉÌˆøñ‘¥Ø±…ÍÍ9…µ”ô‰Á…¹•±!•…ˆøñ‘¥ØøñˆùM¥Á…É§|gÙ¹•Ñ¥µ¤ğ½ˆøñÍÁ…¸ùÕÉÕµÔ‘—}§}Ñ¥É‘§}¥¹¥é‘”·ó}Ñ•É¥å”½Ñ½µ…Ñ¥¬‰¥±‘¥É¥´ŸÙ¹‘•É¥±¥Èƒ
-ÜÍ¥Á…É§|Ñ…Í…ËÅµ±…ËÄ‰…Í¯Åå„¡…ëÅÈMQ0½±…É…¬¥¹‘¥É¥±¥Èğ½ÍÁ…¸øğ½‘¥Øøğ½‘¥Øøñ‘¥Ø±…ÍÍ9…µ”ô‰Ñ…‰±•]É…ÀˆøñÑ…‰±”øñÑ¡•…øñÑÈøñÑ ùM¥Á…É§|ğ½Ñ øñÑ ù7ó}Ñ•É¤ğ½Ñ øñÑ ûqËñ¹±•Èğ½Ñ øñÑ ùQÕÑ…Èğ½Ñ øñÑ ùÕÉÕ´ğ½Ñ øñÑ ûÃ}±•´ğ½Ñ øğ½ÑÈøğ½Ñ¡•…øñÑ‰½‘äùí½É‘•ÉÌ¹±•¹Ñ €ü½É‘•ÉÌ¹µ…À¡½É‘•È€ôø€ñÑÈ­•äõí½É‘•È¹½É‘•É9½ôøñÑøñˆùí½É‘•È¹½É‘•É9½ôğ½ˆøñÍµ…±°ùí¹•Ü…Ñ”¡½É‘•È¹‘…Ñ”¤¹Ñ½1½…±•MÑÉ¥¹œ ÑÈµQHœ¥ôğ½Íµ…±°øğ½ÑøñÑøñˆùí½É‘•È¹¹…µ•ôğ½ˆøñÍµ…±°ùí½É‘•È¹Á¡½¹•ôğ½Íµ…±°ùí½É‘•È¹•µ…¥°€˜˜€ñÍµ…±°ùí½É‘•È¹•µ…¥±ôğ½Íµ…±°ùôñÍµ…±°ùí½É‘•È¹…‘‘É•ÍÍôğ½Íµ…±°øğ½ÑøñÑùí½É‘•È¹¥Ñ•µÍõí½É‘•È¹½¹™¥ÕÉ…Ñ¥½¹Ìü¹±•¹Ñ €ø€À€˜˜€ñÍµ…±°±…ÍÍ9…µ”ô‰ÁÉ½‘ÕÑ¥½¹	…‘”ˆûŠ^ í½É‘•È¹½¹™¥ÕÉ…Ñ¥½¹Ì¹±•¹Ñ¡ôMQ0ƒñÉ•Ñ¥µ”¡…ëÅÈğ½Íµ…±°ùôğ½ÑøñÑøñˆùíµ½¹•ä¡½É‘•È¹Ñ½Ñ…°¥ôğ½ˆøğ½ÑøñÑøñÍ•±•Ğ±…ÍÍ9…µ”ô‰ÍÑ…ÑÕÍM•±•ĞˆÙ…±Õ”õí½É‘•È¹ÍÑ…ÑÕÍô½¹¡…¹”õí•Ù•¹Ğ€ôøÕÁ‘…Ñ•=É‘•È¡½É‘•È°•Ù•¹Ğ¹Ñ…É•Ğ¹Ù…±Õ”¥ôùí=II}MQQUML¹µ…À¡ÍÑ…ÑÕÌ€ôø€ñ½ÁÑ¥½¸­•äõíÍÑ…ÑÕÍôùíÍÑ…ÑÕÍôğ½½ÁÑ¥½¸ø¥ôğ½Í•±•ĞøñÍµ…±°ù—}§}¥­±¥­Ñ”‰¥±‘¥É¥´¥‘•Èğ½Íµ…±°øğ½ÑøñÑøñ‘¥Ø±…ÍÍ9…µ”ô‰½É‘•ÉÑ¥½¹Ìˆùí½É‘•È¹½¹™¥ÕÉ…Ñ¥½¹Ìü¹µ…À ¡½¹™¥ÕÉ…Ñ¥½¸°¥¹‘•à¤€ôøì½¹ÍĞ­•ä€ô€‘í½É‘•È¹½É‘•É9½ô´‘í¥¹‘•áõ€ìÉ•ÑÕÉ¸€ñ‰ÕÑÑ½¸­•äõí­•åô±…ÍÍ9…µ”ô‰ÁÉ½‘ÕÑ¥½¹	Ñ¸ˆ‘¥Í…‰±•õí	½½±•…¸¡ÍÑ±1½…‘¥¹œ¥ô½¹±¥¬õì ¤€ôø‘½İ¹±½…‘‰…©ÕÉAÉ½‘ÕÑ¥½¸¡½É‘•È°½¹™¥ÕÉ…Ñ¥½¸°¥¹‘•à¥ôùíÍÑ±1½…‘¥¹œ€ôôô­•ä€ü€MQ0¡…ëÅÉ±…»Åå½ËŠ˜œ€èƒŠ²‰…©ÕÈ€‘í¥¹‘•à€¬€ÅôMQ0ƒÁ¹‘¥Éôğ½‰ÕÑÑ½¸øìô¥ôñ‰ÕÑÑ½¸±…ÍÍ9…µ”ô‰Í¡¥Á	Ñ¸ˆ½¹±¥¬õì ¤€ôø¹½Ñ¥™å=É‘•È¡½É‘•È¥ôù7ó}Ñ•É¥å”]¡…ÑÍÁÀ‡œğ½‰ÕÑÑ½¸øğ½‘¥Øøğ½Ñøğ½ÑÈø¤€è€ñÑÈøñÑ½±MÁ…¸ôˆØˆ±…ÍÍ9…µ”ô‰•µÁÑäˆù!•»ñèÍ¥Á…É§|å½¬¸ğ½Ñøğ½ÑÈùôğ½Ñ‰½‘äøğ½Ñ…‰±”øğ½‘¥Øøğ½Í•Ñ¥½¸ø((€€€€€€ñÍ•Ñ¥½¸±…ÍÍ9…µ”ô‰Á…¹•°ÕÍÑ½µ=É‘•ÉÍ‘µ¥¸ˆøñ‘¥Ø±…ÍÍ9…µ”ô‰Á…¹•±!•…ˆøñ‘¥ØøñˆûYé•°Q…Í…ËÅ´Q…±•Á±•É¤ğ½ˆøñÍÁ…¸ù½½±”M¡••ÑÌƒŠHÕÍÑ½µ=É‘•ÉÌƒ
-Ü·ó}Ñ•É¥±•É¥¸ŸÙ¹‘•É‘§}¤™½Ñ¿}É…™±…ÈÙ”Ñ…±•Á±•Èğ½ÍÁ…¸øğ½‘¥Øøñ‘¥Ø±…ÍÍ9…µ”ô‰ÕÍÑ½µ¥±Ñ•ÉÌˆùílSñ·ğœ°€¸¸¹UMQ=5}MQQUMMt¹µ…À¡ÍÑ…ÑÕÌ€ôø€ñ‰ÕÑÑ½¸­•äõíÍÑ…ÑÕÍô±…ÍÍ9…µ”õíÕÍÑ½µ¥±Ñ•È€ôôôÍÑ…ÑÕÌ€ü€¡¥À…Ñ¥Ù”œ€è€¡¥Àô½¹±¥¬õì ¤€ôøÍ•ÑÕÍÑ½µ¥±Ñ•È¡ÍÑ…ÑÕÌ¥ôùíÍÑ…ÑÕÍôğ½‰ÕÑÑ½¸ø¥ôğ½‘¥Øøğ½‘¥Øøñ‘¥Ø±…ÍÍ9…µ”ô‰ÕÍÑ½µ…É‘Ìˆùí™¥±Ñ•É•‘ÕÍÑ½´¹±•¹Ñ €ü™¥±Ñ•É•‘ÕÍÑ½´¹µ…À¡½É‘•È€ôø€ñ…ÉÑ¥±”±…ÍÍ9…µ”ô‰ÕÍÑ½µ=É‘•É…Éˆ­•äõí½É‘•È¹É•ÅÕ•ÍÑ9½ô½¹±¥¬õì ¤€ôøÍ•ÑM•±•Ñ•‘ÕÍÑ½´¡½É‘•È¥ôøñ‘¥Ø±…ÍÍ9…µ”ô‰ÕÍÑ½µ=É‘•ÉQ½Àˆøñ‘¥Øøñˆùí½É‘•È¹É•ÅÕ•ÍÑ9½ôğ½ˆøñÍµ…±°ùí¹•Ü…Ñ”¡½É‘•È¹‘…Ñ”¤¹Ñ½1½…±•MÑÉ¥¹œ ÑÈµQHœ¥ôğ½Íµ…±°øğ½‘¥ØøñÍÁ…¸±…ÍÍ9…µ”ô‰ÍÑ…ÑÕÌˆùí½É‘•È¹ÍÑ…ÑÕÍôğ½ÍÁ…¸øğ½‘¥Øøñ‘¥Ø±…ÍÍ9…µ”ô‰ÕÍÑ½µ=É‘•É	½‘äˆøñ‘¥Øøñˆùí½É‘•È¹¹…µ•ôğ½ˆøñÍµ…±°ùí½É‘•È¹Á¡½¹”ñğ½É‘•È¹•µ…¥°ñğ€ŸÁ±•Ñ§}¥´å½¬ôğ½Íµ…±°øñÀùí½É‘•È¹‘•Ñ…¥±Íôğ½ÀøñÍµ…±°ûY³Ÿğèí½É‘•È¹‘¥µ•¹Í¥½¹Ìñğ€œ´ôƒ
-ÜI•¹¬èí½É‘•È¹½±½Èñğ€œ´ôƒ
-Ü‘•Ğèí½É‘•È¹ÅÕ…¹Ñ¥Ñåôğ½Íµ…±°øğ½‘¥Øøñ‘¥Ø±…ÍÍ9…µ”ô‰ÕÍÑ½µQ¡Õµ‰Ìˆùí½É‘•È¹¥µ…•Ìü¹Í±¥” À°€Ì¤¹µ…À ¡ÕÉ°°¥¹‘•à¤€ôø€ñ¥µœ­•äõíÕÉ±ôÍÉŒõíÕÉ±ô…±ĞõíI•™•É…¹Ì€‘í¥¹‘•à€¬€Åõô€¼ø¥õí½É‘•È¹¥µ…•Ìü¹±•¹Ñ €ø€Ì€˜˜€ñÍÁ…¸ø­í½É‘•È¹¥µ…•Ì¹±•¹Ñ €´€Íôğ½ÍÁ…¸ùôğ½‘¥Øøğ½‘¥Øøñ‘¥Ø±…ÍÍ9…µ”ô‰ÕÍÑ½µ=É‘•ÉÑ¥½¹ÌˆøñÍ•±•Ğ±…ÍÍ9…µ”ô‰ÍÑ…ÑÕÍM•±•ĞˆÙ…±Õ”õí½É‘•È¹ÍÑ…ÑÕÍô½¹±¥¬õí•Ù•¹Ğ€ôø•Ù•¹Ğ¹ÍÑ½ÁAÉ½Á……Ñ¥½¸ ¥ô½¹¡…¹”õí•Ù•¹Ğ€ôøì•Ù•¹Ğ¹ÍÑ½ÁAÉ½Á……Ñ¥½¸ ¤ìÕÁ‘…Ñ•ÕÍÑ½´¡½É‘•È°•Ù•¹Ğ¹Ñ…É•Ğ¹Ù…±Õ”¤ìõôùíUMQ=5}MQQUML¹µ…À¡ÍÑ…ÑÕÌ€ôø€ñ½ÁÑ¥½¸­•äõíÍÑ…ÑÕÍôùíÍÑ…ÑÕÍôğ½½ÁÑ¥½¸ø¥ôğ½Í•±•Ğùí½É‘•È¹Á¡½¹”€˜˜€ñ‰ÕÑÑ½¸±…ÍÍ9…µ”ô‰¡½ÍĞÍµ…±±	Ñ¸ˆ½¹±¥¬õí•Ù•¹Ğ€ôøì•Ù•¹Ğ¹ÍÑ½ÁAÉ½Á……Ñ¥½¸ ¤ìÕÍÑ½µ]¡…ÑÍÁÀ¡½É‘•È¤ìõôù]¡…ÑÍÁÀğ½‰ÕÑÑ½¸ùôğ½‘¥Øøğ½…ÉÑ¥±”ø¤€è€ñ‘¥Ø±…ÍÍ9…µ”ô‰•µÁÑäˆù	Ô™¥±ÑÉ•‘”ƒÙé•°Ñ…Í…ËÅ´Ñ…±•‰¤å½¬¸ğ½‘¥Øùôğ½‘¥Øøğ½Í•Ñ¥½¸ø((€€€€€íÍ•±•Ñ•‘ÕÍÑ½´€˜˜€ (€€€€€€€€ñ5½‘…°Ñ¥Ñ±”õíƒYé•°Q…±•À€‘íÍ•±•Ñ•‘ÕÍÑ½´¹É•ÅÕ•ÍÑ9½õô±½Í”õì ¤€ôøÍ•ÑM•±•Ñ•‘ÕÍÑ½´¡¹Õ±°¥ôİ¥‘”ø(€€€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰ÕÍÑ½µ•Ñ…¥°ˆø(€€€€€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰ÕÍÑ½µ•Ñ…¥±É¥ˆøñ‘¥Øøñˆù7ó}Ñ•É¤ğ½ˆøñÍÁ…¸ùíÍ•±•Ñ•‘ÕÍÑ½´¹¹…µ•ôğ½ÍÁ…¸øğ½‘¥Øøñ‘¥ØøñˆùQ•±•™½¸ğ½ˆøñÍÁ…¸ùíÍ•±•Ñ•‘ÕÍÑ½´¹Á¡½¹”ñğ€œ´ôğ½ÍÁ…¸øğ½‘¥Øøñ‘¥ØøñˆùµÁ½ÍÑ„ğ½ˆøñÍÁ…¸ùíÍ•±•Ñ•‘ÕÍÑ½´¹•µ…¥°ñğ€œ´ôğ½ÍÁ…¸øğ½‘¥Øøñ‘¥Øøñˆù‘•Ğğ½ˆøñÍÁ…¸ùíÍ•±•Ñ•‘ÕÍÑ½´¹ÅÕ…¹Ñ¥Ñåôğ½ÍÁ…¸øğ½‘¥Øøñ‘¥ØøñˆûY³Ÿğğ½ˆøñÍÁ…¸ùíÍ•±•Ñ•‘ÕÍÑ½´¹‘¥µ•¹Í¥½¹Ìñğ€œ´ôğ½ÍÁ…¸øğ½‘¥Øøñ‘¥ØøñˆùI•¹¬€¼5…±é•µ”ğ½ˆøñÍÁ…¸ùíÍ•±•Ñ•‘ÕÍÑ½´¹½±½Èñğ€œ´ôğ½ÍÁ…¸øğ½‘¥Øøğ½‘¥Øø(€€€€€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰ÕÍÑ½µ•Ñ…¥±Q•áĞˆøñˆùAÉ½©”•Ñ…çÄğ½ˆøñÀùíÍ•±•Ñ•‘ÕÍÑ½´¹‘•Ñ…¥±Íôğ½ÀùíÍ•±•Ñ•‘ÕÍÑ½´¹¹½Ñ”€˜˜€ğøñˆù9½Ğğ½ˆøñÀùíÍ•±•Ñ•‘ÕÍÑ½´¹¹½Ñ•ôğ½Àøğ¼ùôğ½‘¥Øø(€€€€€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰ÕÍÑ½µ%µ…•ÌˆùíÍ•±•Ñ•‘ÕÍÑ½´¹¥µ…•Ìü¹µ…À ¡ÕÉ°°¥¹‘•à¤€ôø€ñ„­•äõíÕÉ±ô¡É•˜õíÕÉ±ôÑ…É•Ğô‰}‰±…¹¬ˆÉ•°ô‰¹½É•™•ÉÉ•Èˆøñ¥µœÍÉŒõíÕÉ±ô…±ĞõíƒYé•°Ñ…Í…ËÅ´€‘í¥¹‘•à€¬€Åõô€¼øğ½„ø¥ôğ½‘¥Øø(€€€€€€€€€€€€ñ‘¥Ø±…ÍÍ9…µ”ô‰Ñİ¼ˆøñ±…‰•°ùÕÉÕ´ñÍ•±•ĞÙ…±Õ”õíÍ•±•Ñ•‘ÕÍÑ½´¹ÍÑ…ÑÕÍô½¹¡…¹”õí•Ù•¹Ğ€ôøÕÁ‘…Ñ•ÕÍÑ½´¡Í•±•Ñ•‘ÕÍÑ½´°•Ù•¹Ğ¹Ñ…É•Ğ¹Ù…±Õ”°Í•±•Ñ•‘ÕÍÑ½´¹ÅÕ½Ñ”¥ôùíUMQ=5}MQQUML¹µ…À¡ÍÑ…ÑÕÌ€ôø€ñ½ÁÑ¥½¸­•äõíÍÑ…ÑÕÍôùíÍÑ…ÑÕÍôğ½½ÁÑ¥½¸ø¥ôğ½Í•±•Ğøğ½±…‰•°øñ¥•±±…‰•°ô‰Q•­±¥˜€¡Q0¤ˆÑåÁ”ô‰¹Õµ‰•Èˆµ¥¸ôˆÀˆÙ…±Õ”õíÍ•±•Ñ•‘ÕÍÑ½´¹ÅÕ½Ñ”ñğ€œô½¹¡…¹”õí•Ù•¹Ğ€ôøÍ•ÑM•±•Ñ•‘ÕÍÑ½´¡ì€¸¸¹Í•±•Ñ•‘ÕÍÑ½´°ÅÕ½Ñ”è•Ù•¹Ğ¹Ñ…É•Ğ¹Ù…±Õ”ô¥ô€¼øğ½‘¥Øø(€€€€€€€€€€€€ñ‰ÕÑÑ½¸±…ÍÍ9…µ”ô‰ÁÉ¥µ…Éä™Õ±°ˆ½¹±¥¬õì ¤€ôøÕÁ‘…Ñ•ÕÍÑ½´¡Í•±•Ñ•‘ÕÍÑ½´°Í•±•Ñ•‘ÕÍÑ½´¹ÍÑ…ÑÕÌ°Í•±•Ñ•‘ÕÍÑ½´¹ÅÕ½Ñ”¥ôù—}§}¥­±¥­±•É¤-…å‘•Ğğ½‰ÕÑÑ½¸ø(€€€€€€€€€€€íÍ•±•Ñ•‘ÕÍÑ½´¹Á¡½¹”€˜˜€ñ‰ÕÑÑ½¸±…ÍÍ9…µ”ô‰¡½ÍĞ™Õ±°ˆ½¹±¥¬õì ¤€ôøÕÍÑ½µ]¡…ÑÍÁÀ¡Í•±•Ñ•‘ÕÍÑ½´¥ôù]¡…ÑÍÁÀ¥±”	¥±¥±•¹‘¥Èğ½‰ÕÑÑ½¸ùô(€€€€€€€€€€ğ½‘¥Øø(€€€€€€€€ğ½5½‘…°ø(€€€€€€¥ô(€€€€ğ½µ…¥¸ø(€€¤ì)ô()É•…Ñ•I½½Ğ¡‘½Õµ•¹Ğ¹•Ñ±•µ•¹Ñ	å% É½½Ğœ¤¤¹É•¹‘•È (€M%Q}=A8€ü€ñÁÀ€¼ø€è€ñ5…¥¹Ñ•¹…¹•A…”€¼ø(¤ì(
+        body: JSON.stringify({ orderNo: order.orderNo, status })
+      });
+      setOrders(items => items.map(item => item.orderNo === order.orderNo ? { ...item, status } : item));
+      const notification = response.notification;
+      if (notification?.reason === 'status-not-notifiable') return alert('Durum gÃ¼ncellendi. â€œYeniâ€ durumu iÃ§in mÃ¼ÅŸteri bildirimi gÃ¶nderilmez.');
+      const delivered = notification?.channels?.filter(item => item.sent).map(item => item.channel === 'whatsapp' ? 'WhatsApp' : 'e-posta') || [];
+      if (delivered.length) return alert(`Durum gÃ¼ncellendi. MÃ¼ÅŸteriye ${delivered.join(' ve ')} bildirimi gÃ¶nderildi.`);
+      if (notification?.fallbackUrl) {
+        window.open(notification.fallbackUrl, '_blank', 'noopener,noreferrer');
+        return alert('Durum gÃ¼ncellendi. Otomatik bildirim servisi baÄŸlÄ± olmadÄ±ÄŸÄ± iÃ§in mÃ¼ÅŸterinin hazÄ±r WhatsApp mesajÄ± aÃ§Ä±ldÄ±; yalnÄ±zca GÃ¶nderâ€™e basÄ±n.');
+      }
+      alert('Durum gÃ¼ncellendi; ancak mÃ¼ÅŸterinin kullanÄ±labilir iletiÅŸim bilgisi olmadÄ±ÄŸÄ± iÃ§in bildirim gÃ¶nderilemedi.');
+    } catch (error) {
+      alert(error.message);
+    }
+  }
+
+  function notifyOrder(order) {
+    const phone = waPhone(order.phone);
+    if (!phone) return alert('MÃ¼ÅŸterinin telefon numarasÄ± bulunamadÄ±.');
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(statusMessage(order, order.status))}`, '_blank', 'noopener,noreferrer');
+  }
+
+  function newProduct() {
+    setEdit(null);
+    setForm({ name: '', category: 'FigÃ¼r & Oyuncak', price: '', stock: '', image: '', description: '' });
+  }
+
+  function editProduct(product) {
+    setEdit(product.id);
+    setForm({
+      name: product.name,
+      category: product.category,
+      price: product.price,
+      stock: product.stock,
+      image: product.image,
+      description: product.description || ''
+    });
+  }
+
+  async function saveProduct(event) {
+    event.preventDefault();
+    try {
+      const body = { ...form, price: Number(form.price), stock: Number(form.stock) };
+      await api('/api/products', {
+        method: edit ? 'PUT' : 'POST',
+        body: JSON.stringify(edit ? { id: edit, ...body } : body)
+      });
+      await loadProducts();
+      newProduct();
+      alert('ÃœrÃ¼n kaydedildi.');
+    } catch (error) {
+      alert(error.message);
+    }
+  }
+
+  async function delProduct(id) {
+    if (!confirm('Bu Ã¼rÃ¼nÃ¼ kaldÄ±rmak istediÄŸinize emin misiniz?')) return;
+    try {
+      await api('/api/products', { method: 'DELETE', body: JSON.stringify({ id }) });
+      await loadProducts();
+    } catch (error) {
+      alert(error.message);
+    }
+  }
+
+  async function uploadImage(event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) return alert('JPG, PNG veya WEBP gÃ¶rsel seÃ§in.');
+    if (file.size > 3 * 1024 * 1024) return alert('GÃ¶rsel 3 MB altÄ±nda olmalÄ±.');
+
+    setImageUploading(true);
+    const reader = new FileReader();
+    reader.onload = async () => {
+      try {
+        const response = await api('/api/upload', {
+          method: 'POST',
+          body: JSON.stringify({ name: file.name, type: file.type, data: reader.result })
+        });
+        setForm(current => ({ ...current, image: response.url }));
+      } catch (error) {
+        alert(error.message);
+      } finally {
+        setImageUploading(false);
+      }
+    };
+    reader.readAsDataURL(file);
+  }
+
+  return (
+    <div className="app">
+      <div className="glow glow1" />
+      <div className="glow glow2" />
+
+      <header className="header">
+        <div className="wrap nav">
+          <button className="brand" onClick={logoTap} aria-label="UMERA Design 3D ana sayfa">
+            <img src="/logo-mark.webp" alt="" width="58" height="58" />
+            <div><b>UMERA</b><span>DESIGN 3D</span></div>
+          </button>
+          <nav aria-label="Ana menÃ¼">
+            <button className={`navbtn ${!adminOpen && !designerOpen ? 'active' : ''}`} onClick={() => { setAdminOpen(false); setDesignerOpen(false); }}>Katalog</button>
+            <button className={`navbtn lampNav ${designerOpen ? 'active' : ''}`} onClick={() => { setAdminOpen(false); setDesignerOpen(true); }}>Abajur Tasarla</button>
+            <button className="navbtn" onClick={() => setCustom(true)}>Ã–zel TasarÄ±m</button>
+            <button className="cartbtn" onClick={() => setCartOpen(true)}>Sepet <i>{count}</i></button>
+            {admin && <button className="adminbtn" onClick={() => { setDesignerOpen(false); setAdminOpen(true); }}>Admin</button>}
+          </nav>
+        </div>
+      </header>
+
+      {designerOpen && !adminOpen ? (
+        <main className="designerPage">
+          <div className="designerTop wrap">
+            <div><div className="eyebrow">CANLI 3D ABAJUR STÃœDYOSU</div><h1>IÅŸÄ±ÄŸÄ±nÄ± kendin tasarla.</h1><p>Formu, Ã¶lÃ§Ã¼yÃ¼, yÃ¼zeyi, rengi ve duy setini seÃ§; fiyatÄ± anÄ±nda gÃ¶r ve tasarÄ±mÄ±nÄ± sepete ekle.</p></div>
+            <button className="ghost" onClick={() => setDesignerOpen(false)}>â† KataloÄŸa DÃ¶n</button>
+          </div>
+          <div className="abajurStudio">
+            <AbajurKonfigurator
+              onAddToCart={addAbajur}
+              baseUrl={typeof window !== 'undefined' ? `${window.location.origin}${window.location.pathname}` : ''}
+              fiyatUrl="/api/abajur-price"
+              stlIndirme="kapali"
+              filigran="UMERA DESIGN 3D"
+              yoneticiPaneli={false}
+            />
+          </div>
+        </main>
+      ) : !adminOpen ? (
+        <main>
+          <section className="hero wrap">
+            <div className="heroCopy">
+              <div className="eyebrow">3D TASARIM â€¢ ÃœRETÄ°M â€¢ KÄ°ÅÄ°SELLEÅTÄ°RME</div>
+              <h1>Hayal Et.<br /><em>Tasarla.</em><br />GerÃ§ekleÅŸtir.</h1>
+              <p>Modern ve kiÅŸiye Ã¶zel 3D baskÄ± Ã¼rÃ¼nlerini keÅŸfet. HazÄ±r koleksiyondan seÃ§ veya fotoÄŸrafÄ±nÄ± gÃ¶nder; birlikte gerÃ§eÄŸe dÃ¶nÃ¼ÅŸtÃ¼relim.</p>
+              <div className="heroActions">
+                <button className="primary" onClick={() => setDesignerOpen(true)}>Abajurunu Tasarla <span>â†’</span></button>
+                <button className="ghost" onClick={() => setCustom(true)}>Ã–zel TasarÄ±m Ä°ste</button>
+              </div>
+              <div className="heroProof"><span>âœ“ SipariÅŸ numarasÄ±yla takip</span><span>âœ“ TÃ¼rkiye geneli gÃ¶nderim</span></div>
+            </div>
+            <div className="heroVisual">
+              <picture>
+                <source srcSet="/logo-hero.webp" type="image/webp" />
+                <img src="/logo-transparent.png" alt="UMERA Design 3D logosu" width="560" height="560" fetchPriority="high" />
+              </picture>
+            </div>
+          </section>
+
+          <TrustStrip />
+
+          <section className="lampPromo wrap">
+            <div className="lampPromoVisual" aria-hidden="true"><span /><i /></div>
+            <div><div className="eyebrow">YENÄ° Â· CANLI 3D TASARIM</div><h2>HazÄ±r bir abajur seÃ§me.<br /><em>Kendininkini oluÅŸtur.</em></h2><p>Profil, Ã§ap, yÃ¼kseklik, desen, malzeme ve renk seÃ§eneklerini gerÃ§ek zamanlÄ± 3D Ã¶nizlemede birleÅŸtir. Ãœretime uygun fiyatÄ± gÃ¶rÃ¼p tek adÄ±mda sipariÅŸe dÃ¶nÃ¼ÅŸtÃ¼r.</p><div className="lampPromoFacts"><span>CanlÄ± 3D Ã¶nizleme</span><span>Sunucuda doÄŸrulanan fiyat</span><span>E14 / E27 seÃ§enekleri</span></div><button className="primary" onClick={() => setDesignerOpen(true)}>TasarÄ±m StÃ¼dyosunu AÃ§ â†’</button></div>
+          </section>
+
+          <section id="featured" className="wrap featuredSection">
+            <SectionTitle eyebrow="Ã‡OK TERCÄ°H EDÄ°LENLER" title={<>Ä°lk bakÄ±ÅŸta <em>Ã¶ne Ã§Ä±kanlar.</em></>} text="PopÃ¼ler tasarÄ±mlarÄ± incele, sepete ekle ve sipariÅŸini dakikalar iÃ§inde oluÅŸtur." />
+            {loading ? <div className="empty">ÃœrÃ¼nler yÃ¼kleniyor...</div> : (
+              <div className="featuredGrid">
+                {(featured.length ? featured : DEMO).map(product => (
+                  <ProductCard key={`featured-${product.id}`} product={product} onAdd={add} onDetail={setProductDetail} onImage={setSelectedImage} featured />
+                ))}
+              </div>
+            )}
+          </section>
+
+          <section id="catalog" className="wrap catalog">
+            <div className="sectionHead">
+              <SectionTitle eyebrow="UMERA KOLEKSÄ°YONU" title={<>Sen seÃ§, biz <em>Ã¼retelim.</em></>} text="Renk ve Ã¶lÃ§Ã¼ seÃ§enekleri iÃ§in Ã¼rÃ¼n detayÄ±nÄ± inceleyebilir veya bize doÄŸrudan yazabilirsin." />
+              <button className="refresh" onClick={loadProducts}>â†» GÃ¼ncelle</button>
+            </div>
+            <div className="tools">
+              <div className="search"><span>âŒ•</span><input value={query} onChange={event => setQuery(event.target.value)} placeholder="ÃœrÃ¼n ara..." aria-label="ÃœrÃ¼n ara" /></div>
+              <div className="chips">{CATS.map(category => <button key={category} className={cat === category ? 'chip active' : 'chip'} onClick={() => setCat(category)}>{category}</button>)}</div>
+            </div>
+            {loading ? <div className="empty">ÃœrÃ¼nler yÃ¼kleniyor...</div> : filtered.length ? (
+              <div className="grid">
+                {filtered.map(product => <ProductCard key={product.id} product={product} onAdd={add} onDetail={setProductDetail} onImage={setSelectedImage} />)}
+              </div>
+            ) : <div className="empty">AradÄ±ÄŸÄ±n Ã¼rÃ¼nÃ¼ bulamadÄ±k.</div>}
+          </section>
+
+          <ProcessSection onStart={() => setCustom(true)} />
+
+          <section className="customBanner wrap">
+            <div>
+              <div className="eyebrow">SANA Ã–ZEL</div>
+              <h2>AklÄ±ndaki model hazÄ±r deÄŸil mi?</h2>
+              <p>Fikrini, fotoÄŸrafÄ±nÄ± veya Ã¶lÃ§Ã¼lerini gÃ¶nder. Talebini inceleyip teklif ve Ã¼retim sÃ¼reci iÃ§in seninle iletiÅŸime geÃ§elim.</p>
+            </div>
+            <button className="primary" onClick={() => setCustom(true)}>FotoÄŸrafÄ±nÄ± GÃ¶nder â†’</button>
+          </section>
+
+          <FAQSection />
+        </main>
+      ) : (
+        <AdminPanel
+          stats={stats}
+          orders={orders}
+          customOrders={customOrders}
+          products={products}
+          form={form}
+          setForm={setForm}
+          edit={edit}
+          newProduct={newProduct}
+          editProduct={editProduct}
+          saveProduct={saveProduct}
+          delProduct={delProduct}
+          uploadImage={uploadImage}
+          imageUploading={imageUploading}
+          loadDashboard={loadDashboard}
+          logout={logout}
+          updateOrder={updateOrder}
+          notifyOrder={notifyOrder}
+        />
+      )}
+
+      <footer className="footer">
+        <div className="wrap footerGrid">
+          <div className="footerBrand"><img src="/logo-mark.webp" alt="UMERA Design 3D" width="90" height="90" /><p>Hayal Et, Tasarla, GerÃ§ekleÅŸtir.</p></div>
+          <div><b>SipariÅŸ ve destek</b><span>{EMAIL}</span>{WA && <a href={`https://wa.me/${WA}`} target="_blank" rel="noreferrer">WhatsApp ile iletiÅŸim</a>}<span>TÃ¼rkiye geneli gÃ¼venli gÃ¶nderim</span></div>
+          <div><b>Ãœretim bilgisi</b><span>ÃœrÃ¼nler stok ve sipariÅŸ durumuna gÃ¶re hazÄ±rlanÄ±r.</span><span>Tahmini Ã¼retim sÃ¼resi Ã¼rÃ¼n ve adet bazÄ±nda teyit edilir.</span></div>
+          <div><b>ResmÃ® Web Sitesi</b><span>Â© 2026 UMERA Design 3D. TÃ¼m haklarÄ± saklÄ±dÄ±r.</span><span>Marka, logo, tasarÄ±m, metin ve gÃ¶rseller izinsiz kopyalanamaz veya ticari amaÃ§la kullanÄ±lamaz.</span></div>
+        </div>
+      </footer>
+
+      {WA && <a className="whatsappFloat" href={`https://wa.me/${WA}?text=${encodeURIComponent('Merhaba, UMERA Design 3D Ã¼rÃ¼nleri hakkÄ±nda bilgi almak istiyorum.')}`} target="_blank" rel="noreferrer" aria-label="WhatsApp ile iletiÅŸim"><span>WhatsApp</span><b>âœ†</b></a>}
+
+      {selectedImage && <ImageLightbox image={selectedImage} close={() => setSelectedImage(null)} />}
+
+      {productDetail && (
+        <Modal title="ÃœrÃ¼n DetayÄ±" close={() => setProductDetail(null)} wide>
+          <div className="productDetail">
+            <img src={productDetail.image || '/logo-hero.webp'} alt={productDetail.name} />
+            <div>
+              <span className="productCategory">{productDetail.category}</span>
+              <h2>{productDetail.name}</h2>
+              <p>{productDetail.description}</p>
+              <div className="detailFacts"><span>â± 2â€“5 iÅŸ gÃ¼nÃ¼*</span><span>â¬¡ PLA / PETG seÃ§enekleri</span><span>ğŸ¨ Renk teyidi</span><span>ğŸ“¦ GÃ¼venli paketleme</span></div>
+              <div className="detailPrice"><strong>{money(productDetail.price)}</strong><small>*Ãœretim sÃ¼resi adet ve modele gÃ¶re teyit edilir.</small></div>
+              <button className="primary full" disabled={productDetail.stock === 0} onClick={() => { add(productDetail); setProductDetail(null); }}>{productDetail.stock === 0 ? 'TÃ¼kendi' : 'Sepete Ekle'}</button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {cartOpen && (
+        <Modal title="Sepetiniz" close={() => setCartOpen(false)} wide>
+          <div className="cartList">
+            {cart.length ? cart.map(item => (
+              <div className="cartItem" key={item.product.id}>
+                <img src={item.product.image || '/logo-mark.webp'} alt={item.product.name} />
+                <div><b>{item.product.name}</b>{item.product.type === 'abajur' && <small className="cartConfig">{item.product.description}</small>}<small>{money(item.product.price)}</small><div className="step"><button onClick={() => qty(item.product.id, -1)}>âˆ’</button><span>{item.quantity}</span><button onClick={() => qty(item.product.id, 1)}>+</button></div></div>
+                <button className="remove" onClick={() => remove(item.product.id)}>Ã—</button>
+              </div>
+            )) : <div className="empty">Sepetin boÅŸ.</div>}
+          </div>
+          {cart.length > 0 && <div className="cartTotal"><span>Toplam</span><strong>{money(total)}</strong><button className="primary full" onClick={() => { setCartOpen(false); setCheckout(true); }}>SipariÅŸ Bilgilerini Gir</button></div>}
+        </Modal>
+      )}
+
+      {checkout && (
+        <Modal title="SipariÅŸ Bilgileri" close={() => setCheckout(false)}>
+          <form className="form" onSubmit={submitOrder}>
+            <Field name="name" label="Ad Soyad *" required />
+            <Field name="phone" label="Telefon *" required type="tel" placeholder="05xx xxx xx xx" />
+            <Field name="email" label="E-posta" type="email" />
+            <label>Adres *<textarea name="address" required rows="3" /></label>
+            <label>SipariÅŸ Notu<textarea name="note" rows="2" placeholder="Renk, teslimat veya Ã¼rÃ¼n notu..." /></label>
+            <label className="consent"><input type="checkbox" required /> <span>SipariÅŸ bilgilerimin talebimin iÅŸlenmesi amacÄ±yla kaydedilmesini kabul ediyorum.</span></label>
+            <div className="notice">SipariÅŸ Ã¶nce sisteme kaydedilir ve size benzersiz bir sipariÅŸ numarasÄ± verilir.</div>
+            <div className="two"><button className="primary" name="channel" value="whatsapp" disabled={!WA || submittingOrder}>{submittingOrder ? 'Kaydediliyor...' : 'WhatsApp'}</button><button className="ghost" name="channel" value="email" disabled={submittingOrder}>E-posta</button></div>
+            <small className="channelHint">Toplam: {money(total)}</small>
+          </form>
+        </Modal>
+      )}
+
+      {custom && (
+        <Modal title="Ã–zel TasarÄ±m Talebi" close={() => { setCustom(false); setCustomFiles([]); }} wide>
+          <form className="form" onSubmit={customSubmit}>
+            <div className="customIntro"><b>NasÄ±l Ã§alÄ±ÅŸÄ±r?</b><br />FotoÄŸrafÄ±nÄ± ve istediÄŸin detaylarÄ± gÃ¶nder â†’ talebini inceleyelim â†’ fiyat teklifini iletelim â†’ onayÄ±ndan sonra Ã¼retime baÅŸlayalÄ±m.</div>
+            <Field name="name" label="Ad Soyad *" required />
+            <div className="two"><Field name="phone" label="Telefon" type="tel" /><Field name="email" label="E-posta" type="email" /></div>
+            <label>Ne tasarlayalÄ±m? *<textarea name="details" required rows="5" placeholder="ÃœrÃ¼n, kullanÄ±m amacÄ±, referans ve istediÄŸiniz Ã¶zellikler..." /></label>
+            <div className="two"><Field name="dimensions" label="Ã–lÃ§Ã¼ / Boyut" placeholder="Ã–rn. 180 Ã— 80 Ã— 60 mm" /><Field name="color" label="Renk / Malzeme" placeholder="Ã–rn. Mat siyah PLA" /></div>
+            <Field name="quantity" label="Adet" type="number" min="1" defaultValue="1" />
+            <label>FotoÄŸraflar <span className="muted">(JPG, PNG, WEBP â€¢ en fazla 5 adet / 3 MB)</span><input type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={handleCustomFiles} /></label>
+            {customFiles.length > 0 && <div className="customFileList">{customFiles.map(file => <div className="customFile" key={file.name}><span>ğŸ–¼ï¸ {file.name}</span><button type="button" onClick={() => removeCustomFile(file.name)}>Ã—</button></div>)}</div>}
+            <label>Ek Not<textarea name="note" rows="2" placeholder="Teslim tarihi, Ã¶zel istek veya baÅŸka notunuz..." /></label>
+            <label className="consent"><input type="checkbox" required /> <span>Ä°letiÅŸim ve tasarÄ±m bilgilerimin talebimin deÄŸerlendirilmesi amacÄ±yla kaydedilmesini kabul ediyorum.</span></label>
+            {customUploading && <div className="notice">FotoÄŸraflar yÃ¼kleniyor ve tasarÄ±m talebiniz oluÅŸturuluyor...</div>}
+            <button className="primary full" disabled={customUploading}>{customUploading ? 'GÃ¶nderiliyor...' : 'Ã–zel TasarÄ±m Talebini GÃ¶nder â†’'}</button>
+          </form>
+        </Modal>
+      )}
+
+      {receipt && (
+        <Modal title="SipariÅŸ FiÅŸi" close={() => setReceipt(null)}>
+          <div className="receipt"><div className="check">âœ“</div><h3>SipariÅŸiniz alÄ±ndÄ±</h3><p>SipariÅŸ No: <b>{receipt.orderNo}</b></p><pre>{receipt.text}</pre><button className="ghost full" onClick={() => navigator.clipboard.writeText(receipt.text)}>FiÅŸi Kopyala</button></div>
+        </Modal>
+      )}
+
+      {adminLogin && (
+        <Modal title="Yetkili GiriÅŸi" close={() => setAdminLogin(false)}>
+          <form className="form" onSubmit={doLogin}>
+            <Field name="username" label="KullanÄ±cÄ± adÄ±" value={login.username} onChange={event => setLogin({ ...login, username: event.target.value })} required autoComplete="username" />
+            <Field name="password" label="Åifre" type="password" value={login.password} onChange={event => setLogin({ ...login, password: event.target.value })} required autoComplete="current-password" />
+            <div className="notice">Bu alan yalnÄ±zca yetkili yÃ¶netici iÃ§indir.</div>
+            {loginError && <div className="error">{loginError}</div>}
+            <button className="primary full">GiriÅŸ Yap</button>
+          </form>
+        </Modal>
+      )}
+    </div>
+  );
+}
+
+function SectionTitle({ eyebrow, title, text }) {
+  return <div><div className="eyebrow">{eyebrow}</div><h2>{title}</h2>{text && <p className="sectionLead">{text}</p>}</div>;
+}
+
+function TrustStrip() {
+  const items = [
+    ['â—‡', 'KiÅŸiye Ã–zel TasarÄ±m', 'FotoÄŸraf ve Ã¶lÃ§Ã¼nÃ¼ gÃ¶nder.'],
+    ['â¬¡', 'Ã–zenli 3D BaskÄ±', 'Modele uygun Ã¼retim ayarlarÄ±.'],
+    ['âœ“', 'SipariÅŸ Takibi', 'SipariÅŸ numarasÄ±yla kayÄ±t.'],
+    ['âŒ', 'HÄ±zlÄ± Ä°letiÅŸim', 'WhatsApp Ã¼zerinden destek.']
+  ];
+  return <section className="wrap trustStrip">{items.map(([icon, title, text]) => <div className="trustItem" key={title}><i>{icon}</i><div><b>{title}</b><span>{text}</span></div></div>)}</section>;
+}
+
+function ProductCard({ product, onAdd, onDetail, onImage, featured = false }) {
+  return (
+    <article className={featured ? 'card featuredCard' : 'card'}>
+      <div className="pic">
+        <img src={product.image || '/logo-hero.webp'} alt={product.name} loading={featured ? 'eager' : 'lazy'} onClick={() => onImage({ url: product.image || '/logo-hero.webp', name: product.name })} role="button" tabIndex="0" onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') onImage({ url: product.image || '/logo-hero.webp', name: product.name }); }} />
+        <span>{product.category}</span>
+        {product.stock === 0 && <b className="sold">TÃ¼kendi</b>}
+      </div>
+      <div className="cardBody">
+        <h3>{product.name}</h3>
+        <p>{product.description}</p>
+        <div className="productMeta"><span>â± 2â€“5 iÅŸ gÃ¼nÃ¼*</span><span>â¬¡ SipariÅŸe gÃ¶re Ã¼retim</span></div>
+        <div className="cardBottom"><strong>{money(product.price)}</strong><div><button className="detailBtn" onClick={() => onDetail(product)}>Ä°ncele</button><button onClick={() => onAdd(product)} disabled={product.stock === 0}>{product.stock === 0 ? 'TÃ¼kendi' : 'Sepete Ekle'}</button></div></div>
+        <small>{product.stock > 0 ? `Mevcut stok: ${product.stock}` : 'Stokta yok'} Â· *Tahmini sÃ¼re</small>
+      </div>
+    </article>
+  );
+}
+
+function ProcessSection({ onStart }) {
+  const steps = [
+    ['01', 'FotoÄŸrafÄ±nÄ± gÃ¶nder', 'Referans gÃ¶rselleri, Ã¶lÃ§Ã¼yÃ¼ ve istediÄŸin Ã¶zellikleri paylaÅŸ.'],
+    ['02', 'Talebini inceleyelim', 'Ãœretilebilirlik, malzeme ve detaylarÄ± deÄŸerlendirelim.'],
+    ['03', 'Teklifi onayla', 'Fiyat ve tahmini Ã¼retim sÃ¼resini sana iletelim.'],
+    ['04', 'Ãœretime baÅŸlayalÄ±m', 'OnayÄ±ndan sonra Ã¼rÃ¼nÃ¼ Ã¶zenle hazÄ±rlayalÄ±m.']
+  ];
+  return <section className="wrap processSection"><SectionTitle eyebrow="Ã–ZEL TASARIM SÃœRECÄ°" title={<>DÃ¶rt adÄ±mda <em>fikrinden Ã¼rÃ¼ne.</em></>} text="FiyatÄ± belli olmayan Ã¶zel talepler satÄ±ÅŸ sipariÅŸlerinden ayrÄ± takip edilir." /><div className="processGrid">{steps.map(([number, title, text]) => <div className="processCard" key={number}><span>{number}</span><h3>{title}</h3><p>{text}</p></div>)}</div><button className="primary processCta" onClick={onStart}>Ã–zel TasarÄ±m Talebi OluÅŸtur â†’</button></section>;
+}
+
+function FAQSection() {
+  const faqs = [
+    ['Abajur tasarÄ±mÄ±mÄ± nasÄ±l sipariÅŸ veririm?', 'Abajur Tasarla alanÄ±nda Ã¶lÃ§Ã¼, profil, desen, malzeme, renk ve duy tipini seÃ§. Ãœretime uygun tasarÄ±mÄ±nÄ± sepete eklediÄŸinde fiyat sunucuda yeniden doÄŸrulanÄ±r ve normal sipariÅŸ akÄ±ÅŸÄ±na eklenir.'],
+    ['ÃœrÃ¼nler hazÄ±r stok mu?', 'BazÄ± Ã¼rÃ¼nler stoktan, bazÄ± Ã¼rÃ¼nler sipariÅŸ Ã¼zerine Ã¼retilir. GÃ¼ncel stok bilgisi Ã¼rÃ¼n kartÄ±nda gÃ¶rÃ¼nÃ¼r.'],
+    ['Ãœretim ne kadar sÃ¼rer?', 'Model, adet ve baskÄ± sÃ¼resine gÃ¶re deÄŸiÅŸir. Standart Ã¼rÃ¼nlerde tahmini sÃ¼re Ã§oÄŸunlukla 2â€“5 iÅŸ gÃ¼nÃ¼dÃ¼r; sipariÅŸ Ã¶ncesinde teyit edilir.'],
+    ['Renk veya boyut deÄŸiÅŸtirebilir miyim?', 'Uygun olan modellerde renk ve Ã¶lÃ§Ã¼ deÄŸiÅŸikliÄŸi yapÄ±labilir. ÃœrÃ¼n detayÄ±ndan veya WhatsApp Ã¼zerinden bilgi alabilirsin.'],
+    ['Ã–zel tasarÄ±m fiyatÄ± nasÄ±l belirlenir?', 'GÃ¶nderdiÄŸin fotoÄŸraf, Ã¶lÃ§Ã¼, malzeme, baskÄ± sÃ¼resi ve adet deÄŸerlendirilerek teklif oluÅŸturulur.']
+  ];
+  return <section className="wrap faqSection"><SectionTitle eyebrow="SIK SORULAN SORULAR" title={<>SipariÅŸten Ã¶nce <em>merak edilenler.</em></>} /><div className="faqGrid">{faqs.map(([question, answer]) => <details key={question}><summary>{question}<span>+</span></summary><p>{answer}</p></details>)}</div></section>;
+}
+
+function ImageLightbox({ image, close }) {
+  return <div className="imageLightbox" onClick={close} role="dialog" aria-modal="true" aria-label="ÃœrÃ¼n gÃ¶rseli"><button className="imageLightboxClose" onClick={close} aria-label="Kapat">Ã—</button><img src={image.url} alt={image.name} onClick={event => event.stopPropagation()} /><div className="imageLightboxCaption">{image.name}</div></div>;
+}
+
+function Field({ label, name, ...props }) {
+  return <label>{label}<input name={name} {...props} /></label>;
+}
+
+function Modal({ title, close, children, wide = false }) {
+  return <div className="modalBack" onMouseDown={event => { if (event.target === event.currentTarget) close(); }}><div className={wide ? 'modal wide' : 'modal'}><div className="modalHead"><h3>{title}</h3><button type="button" onClick={close} aria-label="Kapat">Ã—</button></div>{children}</div></div>;
+}
+
+function AdminPanel({ stats, orders, customOrders, products, form, setForm, edit, newProduct, editProduct, saveProduct, delProduct, uploadImage, imageUploading, loadDashboard, logout, updateOrder, notifyOrder }) {
+  const [customFilter, setCustomFilter] = useState('TÃ¼mÃ¼');
+  const [selectedCustom, setSelectedCustom] = useState(null);
+  const [stlLoading, setStlLoading] = useState('');
+
+  async function updateCustom(order, status, quote = order.quote) {
+    try {
+      const response = await api('/api/custom-orders', {
+        method: 'PUT',
+        body: JSON.stringify({ requestNo: order.requestNo, status, quote })
+      });
+      const updated = { ...order, status: response.order.status, quote: response.order.quote };
+      setSelectedCustom(current => current?.requestNo === order.requestNo ? updated : current);
+      await loadDashboard();
+      alert('Ã–zel tasarÄ±m talebi gÃ¼ncellendi.');
+    } catch (error) {
+      alert(error.message);
+    }
+  }
+
+  function customWhatsApp(order) {
+    const digits = String(order.phone || '').replace(/\D/g, '');
+    if (!digits) return alert('MÃ¼ÅŸterinin telefon numarasÄ± bulunamadÄ±.');
+    const phone = digits.startsWith('90') ? digits : digits.startsWith('0') ? `90${digits.slice(1)}` : digits;
+    const text = `Merhaba ${order.name},\n\nUMERA Design 3D Ã¶zel tasarÄ±m talebiniz (${order.requestNo}) incelenmiÅŸtir.\nDurum: ${order.status}${order.quote ? `\nTeklif: ${money(order.quote)}` : ''}\n\nUMERA Design 3D`;
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
+  }
+
+  async function downloadAbajurProduction(order, _configuration, index) {
+    const key = `${order.orderNo}-${index}`;
+    if (stlLoading) return;
+    setStlLoading(key);
+    try {
+      const response = await fetch('/api/order-stl', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderNo: order.orderNo, configurationIndex: index })
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || 'STL oluÅŸturulamadÄ±.');
+      }
+      const blob = await response.blob();
+      if (blob.size < 84) throw new Error('STL dosyasÄ± geÃ§ersiz veya boÅŸ.');
+      const disposition = response.headers.get('Content-Disposition') || '';
+      const match = disposition.match(/filename="([^"]+)"/i);
+      const fileName = match?.[1] || `${order.orderNo}-abajur-${index + 1}.stl`;
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (error) {
+      alert(error.message);
+    } finally {
+      setStlLoading('');
+    }
+  }
+
+  const filteredCustom = customOrders.filter(order => customFilter === 'TÃ¼mÃ¼' || order.status === customFilter);
+
+  return (
+    <main className="adminPage wrap">
+      <div className="adminTop"><div><div className="eyebrow">YÃ–NETÄ°M MERKEZÄ°</div><h1>UMERA <em>Admin</em></h1><p>ÃœrÃ¼nlerini, sipariÅŸlerini ve Ã¶zel tasarÄ±m taleplerini tek yerden yÃ¶net.</p></div><div className="adminActions"><button className="ghost" onClick={loadDashboard}>â†» Yenile</button><button className="ghost" onClick={logout}>Ã‡Ä±kÄ±ÅŸ</button></div></div>
+      <div className="stats">{[
+        ['Toplam ÃœrÃ¼n', products.length, 'ğŸ“¦'],
+        ['Toplam SipariÅŸ', stats?.totalOrders ?? 'â€”', 'ğŸ§¾'],
+        ['Bu Ay', stats?.monthOrders ?? 'â€”', 'ğŸ“…'],
+        ['Toplam Ciro', stats ? money(stats.totalRevenue) : 'â€”', 'â‚º'],
+        ['Bekleyen', stats?.pending ?? 'â€”', 'â³'],
+        ['Ã–zel TasarÄ±m', customOrders.length, 'ğŸ¨']
+      ].map(item => <div className="stat" key={item[0]}><span>{item[2]}</span><small>{item[0]}</small><b>{item[1]}</b></div>)}</div>
+
+      <div className="adminGrid">
+        <section className="panel"><div className="panelHead"><div><b>ÃœrÃ¼n YÃ¶netimi</b><span>Google Sheets ile senkron</span></div><button className="primary" onClick={newProduct}>+ Yeni ÃœrÃ¼n</button></div><div className="productAdmin">{products.map(product => <div className="pRow" key={product.id}><img src={product.image || '/logo-mark.webp'} alt="" /><div><b>{product.name}</b><span>{product.category} Â· {money(product.price)} Â· Stok {product.stock}</span></div><button onClick={() => editProduct(product)}>DÃ¼zenle</button><button className="danger" onClick={() => delProduct(product.id)}>Sil</button></div>)}</div></section>
+        <section className="panel editor"><div className="panelHead"><div><b>{edit ? 'ÃœrÃ¼nÃ¼ DÃ¼zenle' : 'Yeni ÃœrÃ¼n'}</b><span>Bilgileri girip kaydet</span></div></div><form className="form" onSubmit={saveProduct}><Field label="ÃœrÃ¼n adÄ± *" value={form.name} onChange={event => setForm({ ...form, name: event.target.value })} required /><label>Kategori<select value={form.category} onChange={event => setForm({ ...form, category: event.target.value })}>{CATS.filter(item => item !== 'TÃ¼mÃ¼').map(category => <option key={category}>{category}</option>)}</select></label><div className="two"><Field label="Fiyat (TL) *" type="number" min="0" value={form.price} onChange={event => setForm({ ...form, price: event.target.value })} required /><Field label="Stok *" type="number" min="0" value={form.stock} onChange={event => setForm({ ...form, stock: event.target.value })} required /></div><label>ÃœrÃ¼n GÃ¶rseli<input type="file" accept="image/jpeg,image/png,image/webp" onChange={uploadImage} /></label>{imageUploading && <div className="notice">GÃ¶rsel yÃ¼kleniyor...</div>}{form.image && <img className="preview" src={form.image} alt="Ã–nizleme" />}<Field label="GÃ¶rsel URL (opsiyonel)" value={form.image} onChange={event => setForm({ ...form, image: event.target.value })} /><label>AÃ§Ä±klama<textarea rows="4" value={form.description} onChange={event => setForm({ ...form, description: event.target.value })} /></label><div className="two"><button className="primary">{edit ? 'DeÄŸiÅŸiklikleri Kaydet' : 'ÃœrÃ¼nÃ¼ YayÄ±nla'}</button><button type="button" className="ghost" onClick={newProduct}>Temizle</button></div></form></section>
+      </div>
+
+      <section className="panel orders"><div className="panelHead"><div><b>SipariÅŸ YÃ¶netimi</b><span>Durumu deÄŸiÅŸtirdiÄŸinizde mÃ¼ÅŸteriye otomatik bildirim gÃ¶nderilir Â· sipariÅŸ tasarÄ±mlarÄ± baskÄ±ya hazÄ±r STL olarak indirilir</span></div></div><div className="tableWrap"><table><thead><tr><th>SipariÅŸ</th><th>MÃ¼ÅŸteri</th><th>ÃœrÃ¼nler</th><th>Tutar</th><th>Durum</th><th>Ä°ÅŸlem</th></tr></thead><tbody>{orders.length ? orders.map(order => <tr key={order.orderNo}><td><b>{order.orderNo}</b><small>{new Date(order.date).toLocaleString('tr-TR')}</small></td><td><b>{order.name}</b><small>{order.phone}</small>{order.email && <small>{order.email}</small>}<small>{order.address}</small></td><td>{order.items}{order.configurations?.length > 0 && <small className="productionBadge">â—ˆ {order.configurations.length} STL Ã¼retime hazÄ±r</small>}</td><td><b>{money(order.total)}</b></td><td><select className="statusSelect" value={order.status} onChange={event => updateOrder(order, event.target.value)}>{ORDER_STATUSES.map(status => <option key={status}>{status}</option>)}</select><small>DeÄŸiÅŸiklikte bildirim gider</small></td><td><div className="orderActions">{order.configurations?.map((configuration, index) => { const key = `${order.orderNo}-${index}`; return <button key={key} className="productionBtn" disabled={Boolean(stlLoading)} onClick={() => downloadAbajurProduction(order, configuration, index)}>{stlLoading === key ? 'STL hazÄ±rlanÄ±yorâ€¦' : `â¬‡ Abajur ${index + 1} STL Ä°ndir`}</button>; })}<button className="shipBtn" onClick={() => notifyOrder(order)}>MÃ¼ÅŸteriye WhatsApp aÃ§</button></div></td></tr>) : <tr><td colSpan="6" className="empty">HenÃ¼z sipariÅŸ yok.</td></tr>}</tbody></table></div></section>
+
+      <section className="panel customOrdersAdmin"><div className="panelHead"><div><b>Ã–zel TasarÄ±m Talepleri</b><span>Google Sheets â†’ CustomOrders Â· mÃ¼ÅŸterilerin gÃ¶nderdiÄŸi fotoÄŸraflar ve talepler</span></div><div className="customFilters">{['TÃ¼mÃ¼', ...CUSTOM_STATUSES].map(status => <button key={status} className={customFilter === status ? 'chip active' : 'chip'} onClick={() => setCustomFilter(status)}>{status}</button>)}</div></div><div className="customCards">{filteredCustom.length ? filteredCustom.map(order => <article className="customOrderCard" key={order.requestNo} onClick={() => setSelectedCustom(order)}><div className="customOrderTop"><div><b>{order.requestNo}</b><small>{new Date(order.date).toLocaleString('tr-TR')}</small></div><span className="status">{order.status}</span></div><div className="customOrderBody"><div><b>{order.name}</b><small>{order.phone || order.email || 'Ä°letiÅŸim yok'}</small><p>{order.details}</p><small>Ã–lÃ§Ã¼: {order.dimensions || '-'} Â· Renk: {order.color || '-'} Â· Adet: {order.quantity}</small></div><div className="customThumbs">{order.images?.slice(0, 3).map((url, index) => <img key={url} src={url} alt={`Referans ${index + 1}`} />)}{order.images?.length > 3 && <span>+{order.images.length - 3}</span>}</div></div><div className="customOrderActions"><select className="statusSelect" value={order.status} onClick={event => event.stopPropagation()} onChange={event => { event.stopPropagation(); updateCustom(order, event.target.value); }}>{CUSTOM_STATUSES.map(status => <option key={status}>{status}</option>)}</select>{order.phone && <button className="ghost smallBtn" onClick={event => { event.stopPropagation(); customWhatsApp(order); }}>WhatsApp</button>}</div></article>) : <div className="empty">Bu filtrede Ã¶zel tasarÄ±m talebi yok.</div>}</div></section>
+
+      {selectedCustom && (
+        <Modal title={`Ã–zel Talep ${selectedCustom.requestNo}`} close={() => setSelectedCustom(null)} wide>
+          <div className="customDetail">
+            <div className="customDetailGrid"><div><b>MÃ¼ÅŸteri</b><span>{selectedCustom.name}</span></div><div><b>Telefon</b><span>{selectedCustom.phone || '-'}</span></div><div><b>E-posta</b><span>{selectedCustom.email || '-'}</span></div><div><b>Adet</b><span>{selectedCustom.quantity}</span></div><div><b>Ã–lÃ§Ã¼</b><span>{selectedCustom.dimensions || '-'}</span></div><div><b>Renk / Malzeme</b><span>{selectedCustom.color || '-'}</span></div></div>
+            <div className="customDetailText"><b>Proje DetayÄ±</b><p>{selectedCustom.details}</p>{selectedCustom.note && <><b>Not</b><p>{selectedCustom.note}</p></>}</div>
+            <div className="customImages">{selectedCustom.images?.map((url, index) => <a key={url} href={url} target="_blank" rel="noreferrer"><img src={url} alt={`Ã–zel tasarÄ±m ${index + 1}`} /></a>)}</div>
+            <div className="two"><label>Durum<select value={selectedCustom.status} onChange={event => updateCustom(selectedCustom, event.target.value, selectedCustom.quote)}>{CUSTOM_STATUSES.map(status => <option key={status}>{status}</option>)}</select></label><Field label="Teklif (TL)" type="number" min="0" value={selectedCustom.quote || ''} onChange={event => setSelectedCustom({ ...selectedCustom, quote: event.target.value })} /></div>
+            <button className="primary full" onClick={() => updateCustom(selectedCustom, selectedCustom.status, selectedCustom.quote)}>DeÄŸiÅŸiklikleri Kaydet</button>
+            {selectedCustom.phone && <button className="ghost full" onClick={() => customWhatsApp(selectedCustom)}>WhatsApp ile Bilgilendir</button>}
+          </div>
+        </Modal>
+      )}
+    </main>
+  );
+}
+
+createRoot(document.getElementById('root')).render(
+  SITE_OPEN ? <App /> : <MaintenancePage />
+);
