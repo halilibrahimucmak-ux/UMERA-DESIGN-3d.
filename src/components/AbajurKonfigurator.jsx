@@ -48,30 +48,44 @@ const DESENLER = [
   { id: "faset", ad: "Faset" },
 ];
 
-const MONTAJ = {
-  boyun: { ad: "Entegre boyun", ek: 45 },
-  halka: { ad: "Duy halkası ile", ek: 0 },
+// Duy standartları — tüm bağlantı geometrisi seçilen standarda göre sabittir.
+// E27 dört, E14 üç kıvrımlı "UMERA yaprağı" ile gövdeye bağlanır.
+const DUYLAR = {
+  E27: {
+    ad: "E27", bogaz: 41, gecmeCap: 41.4, boyunH: 12, govdeEt: 3.2,
+    omuzIc: 3.2, omuzEt: 3, halo: 1.8, ayakSayisi: 4, ayakEt: 4.2,
+    ayakKok: 11, ayakBel: 5.6, ayakUc: 12.5, kivrim: 0.11,
+    minUstCap: 72, ampulR: 18, setTL: 180,
+  },
+  E14: {
+    ad: "E14", bogaz: 28, gecmeCap: 28.4, boyunH: 10, govdeEt: 2.8,
+    omuzIc: 2.5, omuzEt: 2.6, halo: 1.5, ayakSayisi: 3, ayakEt: 3.6,
+    ayakKok: 9, ayakBel: 4.6, ayakUc: 10.5, kivrim: 0.13,
+    minUstCap: 58, ampulR: 12, setTL: 150,
+  },
 };
 
-// Duy standartları — boyun geometrisi ve set fiyatı buradan gelir
-const DUYLAR = {
-  E27: { ad: "E27", bogaz: 41, min: 34, max: 52, ampulR: 18, setTL: 180 },
-  E14: { ad: "E14", bogaz: 28, min: 22, max: 38, ampulR: 12, setTL: 150 },
-};
+function sabitDuyConfig(config) {
+  const duyTipi = DUYLAR[config.duyTipi] ? config.duyTipi : "E27";
+  const duy = DUYLAR[duyTipi];
+  return {
+    ...config,
+    duyTipi,
+    montaj: "boyun",
+    bogazCap: duy.bogaz,
+    boyunH: duy.boyunH,
+    kolSayisi: duy.ayakSayisi,
+    kolKalinlik: duy.ayakEt,
+    ustCap: Math.max(Number(config.ustCap) || duy.minUstCap, duy.minUstCap),
+  };
+}
 
 const PAKETLER = {
   baslik: { ad: "Yalnızca başlık", aciklama: "Sadece basılmış abajur gövdesi." },
   set: { ad: "Duylu set", aciklama: "Abajur + duy + 1,5 m kablo + tavan askısı." },
 };
 
-// Boyun sabitleri (mm)
-const BOYUN = {
-  tolerans: 0.4,   // boğaza eklenen boşluk
-  govdeEt: 3.0,    // boyun cidarı
-  omuzIc: 3.0,     // omuzun içeri taşması
-  omuzEt: 3.0,     // omuz kalınlığı
-  kolGomme: 1.2,   // kolun gövde duvarına gömüldüğü mesafe
-};
+const AYAK_GOMME = 1.6; // taşıyıcının gövde duvarına güvenli birleşim payı (mm)
 
 const VARSAYILAN = {
   paket: "set",
@@ -93,7 +107,7 @@ const VARSAYILAN = {
   bogazCap: 41,
   boyunH: 12,
   kolSayisi: 4,
-  kolKalinlik: 5,
+  kolKalinlik: 4.2,
   kelvin: 2700,
   adet: 1,
 };
@@ -136,7 +150,7 @@ const PAY = { cap: 10, yukseklik: 6 };    // tablaya bırakılan emniyet payı (
 const TABLA_CAP = Math.min(TABLA.x, TABLA.y); // çapı kısa kenar sınırlar
 
 // Geometri sürümü — sunucudaki üretici ile eşleşmeli (bkz. siparis-stl.mjs)
-const GEO_SURUM = "1.0";
+const GEO_SURUM = "2.0";
 
 /* --------------------------- GEOMETRİ ----------------------------- */
 
@@ -285,7 +299,7 @@ function abajurGeometrisi(p) {
   return geo;
 }
 
-/* ---------------- E27 BOYUN + KOLLAR ---------------- */
+/* ---------------- SABİT DUY ROZETİ ---------------- */
 
 /**
  * (r, y) düzlemindeki kapalı bir profili Y ekseni etrafında döndürür.
@@ -332,51 +346,90 @@ function birlestir(geoler) {
   return g;
 }
 
+/** Merkezden gövdeye uzanan kıvrımlı ve ortası incelen yaprak taşıyıcı. */
+function yaprakAyakGeometrisi(aci, rIc, rDis, yUst, duy) {
+  const N = 10;
+  const pos = new Float32Array((N + 1) * 4 * 3);
+  const yumusat = (v) => v * v * (3 - 2 * v);
+  const yaz = (i, j, x, y, z) => {
+    const k = (i * 4 + j) * 3;
+    pos[k] = x; pos[k + 1] = y; pos[k + 2] = z;
+  };
+
+  for (let i = 0; i <= N; i++) {
+    const t = i / N;
+    const r = rIc + (rDis - rIc) * t;
+    const a = aci + duy.kivrim * Math.sin(Math.PI * t);
+    const genislik = t <= 0.5
+      ? duy.ayakKok + (duy.ayakBel - duy.ayakKok) * yumusat(t * 2)
+      : duy.ayakBel + (duy.ayakUc - duy.ayakBel) * yumusat((t - 0.5) * 2);
+    const yari = genislik / 2;
+    const cx = r * Math.cos(a), cz = r * Math.sin(a);
+    const tx = -Math.sin(a), tz = Math.cos(a);
+    const kalinlik = duy.ayakEt * (0.82 + 0.18 * Math.sin(Math.PI * t));
+    const yAlt = yUst - kalinlik;
+    yaz(i, 0, cx + tx * yari, yUst, cz + tz * yari);
+    yaz(i, 1, cx - tx * yari, yUst, cz - tz * yari);
+    yaz(i, 2, cx + tx * yari, yAlt, cz + tz * yari);
+    yaz(i, 3, cx - tx * yari, yAlt, cz - tz * yari);
+  }
+
+  const idx = [];
+  const id = (i, j) => i * 4 + j;
+  for (let i = 0; i < N; i++) {
+    const j = i + 1;
+    idx.push(id(i, 0), id(i, 1), id(j, 0), id(i, 1), id(j, 1), id(j, 0));
+    idx.push(id(i, 2), id(j, 2), id(i, 3), id(i, 3), id(j, 2), id(j, 3));
+    idx.push(id(i, 2), id(i, 0), id(j, 2), id(i, 0), id(j, 0), id(j, 2));
+    idx.push(id(i, 1), id(i, 3), id(j, 1), id(i, 3), id(j, 3), id(j, 1));
+  }
+  idx.push(id(0, 0), id(0, 2), id(0, 1), id(0, 1), id(0, 2), id(0, 3));
+  idx.push(id(N, 0), id(N, 1), id(N, 2), id(N, 1), id(N, 3), id(N, 2));
+
+  const g = new THREE.BufferGeometry();
+  g.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+  g.setIndex(idx);
+  g.computeVertexNormals();
+  return g;
+}
+
 /**
- * E27 duy boynu + taşıyıcı kollar.
- * Gövdeyle kaynatılmaz; kollar duvarın içine gömülü ayrı kapalı katılardır.
- * Dilimleyici bunları birleştirir (union), baskıda tek parça çıkar.
+ * Duy boynu + UMERA rozet taşıyıcıları. Ölçüler kullanıcıdan değil,
+ * doğrudan E14/E27 teknik tablosundan gelir.
  */
 function montajGeometrisi(p) {
-  if (p.montaj !== "boyun") return null;
+  const duy = DUYLAR[p.duyTipi] || DUYLAR.E27;
   const H = p.yukseklik;
-  const hh = p.boyunH;
-  const ri = (p.bogazCap + BOYUN.tolerans) / 2;
-  const ro = ri + BOYUN.govdeEt;
-  const rs = ri - BOYUN.omuzIc;
+  const hh = duy.boyunH;
+  const ri = duy.gecmeCap / 2;
+  const ro = ri + duy.govdeEt;
+  const rt = ro + duy.halo;
+  const rs = ri - duy.omuzIc;
 
-  // Boyun profili — omuz üstte (ters baskıda tablaya bakar)
+  // Boyun üstte rozet köküne doğru genişler; düz silindir görüntüsü kırılır.
   const profil = [
-    [rs, hh - BOYUN.omuzEt],
-    [ri, hh - BOYUN.omuzEt],
+    [rs, hh - duy.omuzEt],
+    [ri, hh - duy.omuzEt],
     [ri, 0],
-    [ro, 0],
-    [ro, hh],
+    [ro - 0.6, 0],
+    [ro, 1.2],
+    [ro, hh - duy.ayakEt - 1],
+    [rt, hh - duy.ayakEt],
+    [rt, hh],
     [rs, hh],
   ];
   const boyun = profilDondur(profil, 96, H - hh);
 
-  // Kollar
-  const kollar = [];
-  const n = Math.max(2, Math.round(p.kolSayisi));
+  const yapraklar = [];
+  const n = duy.ayakSayisi;
   for (let i = 0; i < n; i++) {
     const th = (i / n) * Math.PI * 2;
-    const rDis = disR(th, 1, p) - p.cidar + BOYUN.kolGomme;
-    const rIc = ro - 1.0;
-    const boy = rDis - rIc;
-    if (boy <= 1) continue;
-    const kutu = new THREE.BoxGeometry(boy, hh, p.kolKalinlik);
-    const m = new THREE.Matrix4()
-      .makeRotationY(-th)
-      .setPosition(
-        ((rIc + rDis) / 2) * Math.cos(th),
-        H - hh / 2,
-        ((rIc + rDis) / 2) * Math.sin(th)
-      );
-    kutu.applyMatrix4(m);
-    kollar.push(kutu);
+    const rDis = disR(th, 1, p) - p.cidar + AYAK_GOMME;
+    const rIc = rt - 1.4;
+    if (rDis - rIc <= 3) continue;
+    yapraklar.push(yaprakAyakGeometrisi(th, rIc, rDis, H, duy));
   }
-  return birlestir([boyun, ...kollar]);
+  return birlestir([boyun, ...yapraklar]);
 }
 
 /** Baskı yönü ve en kötü sarkma açısı (dikeyden derece) */
@@ -397,9 +450,7 @@ function sarkmaAcisi(p, ters) {
 
 function baskiYonu(p) {
   const ters = sarkmaAcisi(p, true);
-  const duz = sarkmaAcisi(p, false);
-  if (p.montaj === "boyun") return { ters: true, aci: ters, zorunlu: true };
-  return ters <= duz ? { ters: true, aci: ters, zorunlu: false } : { ters: false, aci: duz, zorunlu: false };
+  return { ters: true, aci: ters, zorunlu: true };
 }
 
 // İşaretli hacim (mm³) — diverjans teoremi
@@ -681,9 +732,9 @@ export default function AbajurKonfigurator({
   const [p, setP] = useState(() => {
     if (typeof window !== "undefined" && window.location.hash.startsWith("#d=")) {
       const d = b64dec(window.location.hash.slice(3));
-      if (d && d.yukseklik) return { ...VARSAYILAN, ...d };
+      if (d && d.yukseklik) return sabitDuyConfig({ ...VARSAYILAN, ...d });
     }
-    return VARSAYILAN;
+    return sabitDuyConfig(VARSAYILAN);
   });
   const [isik, setIsik] = useState(true);
   const [otoDon, setOtoDon] = useState(true);
@@ -727,13 +778,13 @@ export default function AbajurKonfigurator({
   const renk = useMemo(() => RENKLER.find((r) => r.ad === p.renk) || RENKLER[0], [p.renk]);
   const duy = DUYLAR[p.duyTipi] || DUYLAR.E27;
 
-  // Duy değişince boğaz çapı o standardın aralığına taşınır
+  // Duy değişince bağlantının tüm teknik ölçüleri sabit tabloya döner.
   const duyDegistir = useCallback((v) => {
     const d = DUYLAR[v];
-    setP((o) => ({
+    setP((o) => sabitDuyConfig({
       ...o,
       duyTipi: v,
-      bogazCap: o.duyTipi === v ? o.bogazCap : d.bogaz,
+      ustCap: Math.max(o.ustCap, d.minUstCap),
     }));
   }, []);
 
@@ -831,17 +882,10 @@ export default function AbajurKonfigurator({
   /* ---------- doğrulama ---------- */
   const uyarilar = useMemo(() => {
     const u = [];
-    if (p.montaj === "boyun") {
-      const boyunDis = p.bogazCap + BOYUN.tolerans + 2 * BOYUN.govdeEt;
-      if (p.ustCap < boyunDis + 16)
-        u.push({ tip: "hata", m: `${p.duyTipi} boynu için üst çap en az ${Math.ceil(boyunDis + 16)} mm olmalı.` });
-      if (p.boyunH < 8)
-        u.push({ tip: "uyari", m: "Boyun 8 mm'den kısa olursa duy halkası kavramaz." });
-      if (p.kolSayisi < 3)
-        u.push({ tip: "uyari", m: "3'ten az kol boynu eğrilmeye açık bırakır." });
-      if (yon.aci > 50)
-        u.push({ tip: "uyari", m: `Ters baskıda ${yon.aci.toFixed(0)}° sarkma var; alt kenar destek isteyebilir.` });
-    }
+    if (p.ustCap < duy.minUstCap)
+      u.push({ tip: "hata", m: `${p.duyTipi} sabit rozeti için üst çap en az ${duy.minUstCap} mm olmalı.` });
+    if (yon.aci > 50)
+      u.push({ tip: "uyari", m: `Ters baskıda ${yon.aci.toFixed(0)}° sarkma var; alt kenar destek isteyebilir.` });
     if (p.yukseklik > TABLA.z - PAY.yukseklik)
       u.push({ tip: "hata", m: `Yükseklik yazıcıya sığmıyor (max ${TABLA.z - PAY.yukseklik} mm).` });
     if (enBuyukCap > TABLA_CAP - PAY.cap)
@@ -855,7 +899,7 @@ export default function AbajurKonfigurator({
     if (p.malzeme === "PLA")
       u.push({ tip: "uyari", m: "PLA yalnızca LED ampulle kullanılmalı." });
     return u;
-  }, [p, enBuyukCap, yon]);
+  }, [p, enBuyukCap, yon, duy]);
 
   const hataVar = uyarilar.some((u) => u.tip === "hata");
 
@@ -1207,11 +1251,12 @@ export default function AbajurKonfigurator({
     setTimeout(() => setBildirim(""), 2600);
   };
 
-  const dosyaAdi = `abajur_${p.profil}_${p.altCap}x${p.yukseklik}_${p.desen}`;
+  const dosyaAdi = `abajur_${p.profil}_${p.altCap}x${p.yukseklik}_${p.desen}_${p.duyTipi}`;
 
   const paket = () => ({
-    surum: 2,
-    config: p,
+    surum: 3,
+    geoSurum: GEO_SURUM,
+    config: sabitDuyConfig(p),
     ozet: {
       gram: +gram.toFixed(1),
       hacimCm3: +hacim.toFixed(1),
@@ -1219,7 +1264,7 @@ export default function AbajurKonfigurator({
       enBuyukCapMm: Math.round(enBuyukCap),
       baskiYonu: yon.ters ? "ters" : "duz",
       sarkmaAcisi: +yon.aci.toFixed(1),
-      vazoModu: p.montaj !== "boyun",
+      vazoModu: false,
     },
     // SADECE GÖSTERİM — sunucu fiyatı config'ten yeniden hesaplamalı
     fiyatGosterim: {
@@ -1436,7 +1481,7 @@ export default function AbajurKonfigurator({
         <Bolum no="02" baslik="Gövde">
           <Secim etiket="Profil" secenekler={PROFILLER} deger={p.profil} onChange={(v) => set("profil", v)} accent={accent} />
           <Kaydirac etiket="Alt çap" birim=" mm" deger={p.altCap} min={80} max={sinir.capMax} onChange={(v) => set("altCap", v)} accent={accent} />
-          <Kaydirac etiket="Üst çap" birim=" mm" deger={p.ustCap} min={46} max={sinir.capMax} onChange={(v) => set("ustCap", v)} accent={accent} />
+          <Kaydirac etiket="Üst çap" birim=" mm" deger={p.ustCap} min={duy.minUstCap} max={sinir.capMax} onChange={(v) => set("ustCap", v)} accent={accent} />
           <Kaydirac etiket="Yükseklik" birim=" mm" deger={p.yukseklik} min={80} max={sinir.yukseklikMax} onChange={(v) => set("yukseklik", v)} accent={accent} />
           {(p.profil === "fici" || p.profil === "kumsaati") && (
             <Kaydirac etiket="Bel miktarı" birim=" mm" deger={p.bel} min={0} max={sinir.belMax} onChange={(v) => set("bel", v)} accent={accent} />
@@ -1487,35 +1532,40 @@ export default function AbajurKonfigurator({
               ))}
             </div>
           </div>
-          <Secim
-            etiket="Montaj"
-            secenekler={Object.entries(MONTAJ).map(([id, m]) => ({ id, ad: m.ad }))}
-            deger={p.montaj}
-            onChange={(v) => set("montaj", v)}
-            accent={accent}
-          />
-          {p.montaj === "boyun" && (
-            <div className="mb-5 p-3" style={{ background: T.panel2, borderRadius: 2 }}>
-              <Kaydirac
-                etiket="Boğaz çapı"
-                birim=" mm"
-                deger={p.bogazCap}
-                min={duy.min}
-                max={duy.max}
-                adim={0.5}
-                onChange={(v) => set("bogazCap", v)}
-                accent={accent}
-              />
-              <Kaydirac etiket="Boyun yüksekliği" birim=" mm" deger={p.boyunH} min={6} max={30} onChange={(v) => set("boyunH", v)} accent={accent} />
-              <Kaydirac etiket="Kol sayısı" deger={p.kolSayisi} min={2} max={8} onChange={(v) => set("kolSayisi", v)} accent={accent} />
-              <Kaydirac etiket="Kol kalınlığı" birim=" mm" deger={p.kolKalinlik} min={3} max={12} adim={0.5} onChange={(v) => set("kolKalinlik", v)} accent={accent} />
-              <div style={{ fontFamily: MONO, fontSize: 10, color: T.soluk, lineHeight: 1.6 }}>
-                Duy içeriden geçirilir, duy halkası omuza oturur. {p.duyTipi} için tipik
-                boğaz {duy.bogaz} mm; kendi duyunu ölçüp gireceksen modele{" "}
-                {BOYUN.tolerans} mm boşluk eklenir.
+          <div
+            className="mb-5 p-4"
+            style={{ background: T.panel2, border: `1px solid ${T.cizgi}`, borderRadius: 2 }}
+          >
+            <div className="flex justify-between gap-3" style={{ alignItems: "flex-start", marginBottom: 12 }}>
+              <div>
+                <div style={{ fontFamily: MONO, fontSize: 9, color: T.soluk, letterSpacing: "0.16em" }} className="uppercase">
+                  UMERA sabit duy rozeti
+                </div>
+                <div style={{ fontSize: 14, fontWeight: 750, color: accent, marginTop: 4 }}>
+                  {p.duyTipi} · {duy.ayakSayisi} yapraklı bağlantı
+                </div>
               </div>
+              <span style={{ fontFamily: MONO, fontSize: 9, color: T.soluk, whiteSpace: "nowrap" }}>
+                ÖLÇÜLER SABİT
+              </span>
             </div>
-          )}
+            <div className="grid gap-2" style={{ gridTemplateColumns: "repeat(3, minmax(0, 1fr))", marginBottom: 12 }}>
+              {[
+                ["Geçme", `Ø${duy.gecmeCap.toFixed(1)} mm`],
+                ["Boyun", `${duy.boyunH} mm`],
+                ["Taşıyıcı", `${duy.ayakSayisi} ayak`],
+              ].map(([k, v]) => (
+                <div key={k} style={{ padding: 8, background: T.panel, borderRadius: 2 }}>
+                  <div style={{ fontFamily: MONO, fontSize: 8, color: T.soluk }}>{k}</div>
+                  <div style={{ fontFamily: MONO, fontSize: 10, color: T.yazi, marginTop: 3 }}>{v}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{ fontFamily: MONO, fontSize: 10, color: T.soluk, lineHeight: 1.6 }}>
+              Geçme çapı, boyun ve kıvrımlı taşıyıcı ayaklar {p.duyTipi} standardına göre otomatik gelir;
+              üretim güvenliği için değiştirilemez.
+            </div>
+          </div>
           <Kaydirac etiket="Ampul rengi" birim=" K" deger={p.kelvin} min={2200} max={6000} adim={100} onChange={(v) => set("kelvin", v)} accent={accent} />
         </Bolum>
 
@@ -1539,7 +1589,7 @@ export default function AbajurKonfigurator({
               ["Baskı süresi", `~${sureSaat.toFixed(1)} saat`],
               [
                 "Duvar",
-                `${p.cidar.toFixed(1)} mm · ${p.montaj === "boyun" ? "normal mod" : "vazo modu uyumlu"}`,
+                `${p.cidar.toFixed(1)} mm · sabit duy rozeti · normal mod`,
               ],
               [
                 "Baskı yönü",
@@ -1548,7 +1598,7 @@ export default function AbajurKonfigurator({
               ["Sarkma", `en fazla ${yon.aci.toFixed(0)}° · ${yon.aci > 50 ? "destek gerekebilir" : "desteksiz"}`],
               [
                 "Montaj",
-                p.montaj === "boyun" ? `${p.duyTipi} · Ø${p.bogazCap} boğaz · ${p.kolSayisi} kol` : "Duy halkası ile",
+                `${p.duyTipi} sabit · Ø${duy.gecmeCap.toFixed(1)} mm · ${duy.ayakSayisi} yaprak`,
               ],
               ["Not", mal.not],
             ].map(([k, v]) => (

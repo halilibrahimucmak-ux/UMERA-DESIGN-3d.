@@ -3,7 +3,7 @@
 ## 3D abajur tasarım ve sipariş akışı
 
 - Üst menüdeki **Abajur Tasarla** bağlantısı canlı Three.js yapılandırıcısını açar.
-- Müşteri profil, ölçü, desen, malzeme, renk, E14/E27 duy ve paket seçimini gerçek zamanlı önizler.
+- Müşteri profil, ölçü, desen, malzeme, renk, E14/E27 duy ve paket seçimini gerçek zamanlı önizler. Duy bağlantısı kullanıcı tarafından değiştirilemez: E27, Ø41,4 mm geçme ve dört kıvrımlı taşıyıcıyla; E14, Ø28,4 mm geçme ve üç kıvrımlı taşıyıcıyla sabit üretilir.
 - Sepete ekleme sırasında `/api/abajur-price` seçimi sunucuda yeniden doğrular ve fiyatı aynı geometri üzerinden hesaplar.
 - Abajur, standart ürünlerle aynı sepette ve aynı sipariş formunda satın alınabilir.
 - Siparişin tam üretim yapılandırması Google Sheets `Orders` sayfasındaki `yapilandirma_json` sütununda saklanır.
