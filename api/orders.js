@@ -1,6 +1,7 @@
 import { appendOrder, getProducts, updateOrderStatus } from '../lib/sheets.js';
 import { requireAdmin } from '../lib/auth.js';
 import { enforceRateLimit, setRateLimitResponse } from '../lib/rate-limit.js';
+import { quoteAbajur } from '../lib/abajur.js';
 
 function cleanText(value, max = 500) {
   return String(value || '').trim().slice(0, max);
@@ -25,6 +26,21 @@ export default async function handler(req, res) {
       const currentProducts = await getProducts();
       const validatedItems = body.items.map(item => {
         const quantity = Math.max(1, Math.min(99, Number(item.quantity) || 1));
+        if (item.type === 'abajur') {
+          const abajurQuantity = Math.min(20, quantity);
+          const quote = quoteAbajur({ ...(item.config || {}), adet: abajurQuantity });
+          return {
+            id: cleanText(item.id, 100) || `abajur-${Date.now().toString(36)}`,
+            type: 'abajur',
+            name: quote.name,
+            quantity: abajurQuantity,
+            price: quote.birim,
+            config: quote.config,
+            summary: quote.summary,
+            geoSurum: quote.geoSurum,
+            isEmri: quote.isEmri
+          };
+        }
         const product = currentProducts.find(candidate => candidate.id === item.id);
         if (currentProducts.length && !product) throw new Error('ÜRÜN_BULUNAMADI');
         if (product && product.stock === 0) throw new Error('STOK_YOK');
@@ -60,6 +76,7 @@ export default async function handler(req, res) {
     if (error.message === 'ÜRÜN_BULUNAMADI') return res.status(400).json({ error: 'Sepetteki ürünlerden biri artık satışta değil.' });
     if (error.message === 'STOK_YOK') return res.status(400).json({ error: 'Sepetteki ürünlerden biri tükendi.' });
     if (error.message === 'STOK_YETERSİZ') return res.status(400).json({ error: 'Sepetteki ürünlerden birinin stoğu yetersiz.' });
+    if (error.message === 'ABAJUR_SIGMIYOR') return res.status(400).json({ error: 'Abajur ölçüleri üretim tablasına sığmıyor.' });
     return res.status(500).json({ error: error.message || 'Sipariş işlemi başarısız.' });
   }
 }

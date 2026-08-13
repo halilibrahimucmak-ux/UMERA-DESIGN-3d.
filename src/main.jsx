@@ -2,8 +2,9 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import './styles.css';
 import MaintenancePage from './MaintenancePage.jsx';
+import AbajurKonfigurator from './components/AbajurKonfigurator.jsx';
 
-const SITE_OPEN = import.meta.env.VITE_SITE_OPEN === 'true';
+const SITE_OPEN = import.meta.env.VITE_SITE_OPEN !== 'false';
 
 const WA = import.meta.env.VITE_WHATSAPP_NUMBER || '';
 const EMAIL = import.meta.env.VITE_COMPANY_EMAIL || 'siparis@umeradesign3d.com';
@@ -46,6 +47,16 @@ const money = value => new Intl.NumberFormat('tr-TR', {
   maximumFractionDigits: 0
 }).format(Number(value) || 0);
 
+function configId(config) {
+  const text = JSON.stringify(config);
+  let hash = 2166136261;
+  for (let index = 0; index < text.length; index += 1) {
+    hash ^= text.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0).toString(36);
+}
+
 const api = async (url, options = {}) => {
   const response = await fetch(url, {
     ...options,
@@ -70,6 +81,7 @@ function App() {
   const [submittingOrder, setSubmittingOrder] = useState(false);
   const [receipt, setReceipt] = useState(null);
   const [custom, setCustom] = useState(false);
+  const [designerOpen, setDesignerOpen] = useState(() => typeof window !== 'undefined' && window.location.hash.startsWith('#d='));
   const [adminLogin, setAdminLogin] = useState(false);
   const [admin, setAdmin] = useState(false);
   const [login, setLogin] = useState({ username: '', password: '' });
@@ -176,6 +188,36 @@ function App() {
     setCart(current => current.filter(item => item.product.id !== id));
   }
 
+  async function addAbajur(payload) {
+    const quote = await api('/api/abajur-price', {
+      method: 'POST',
+      body: JSON.stringify({ config: payload.config })
+    });
+    const quantity = Math.max(1, Math.min(20, Number(quote.config.adet) || 1));
+    const product = {
+      id: `abajur-${configId(quote.config)}`,
+      type: 'abajur',
+      name: quote.name,
+      category: 'Abajur Tasarımı',
+      price: quote.birim,
+      stock: 20,
+      image: '/logo-mark.webp',
+      description: quote.summary,
+      config: quote.config,
+      geoSurum: quote.geoSurum
+    };
+    setCart(current => {
+      const existing = current.find(item => item.product.id === product.id);
+      if (existing) {
+        return current.map(item => item.product.id === product.id
+          ? { ...item, quantity: Math.min(20, item.quantity + quantity) }
+          : item);
+      }
+      return [...current, { product, quantity }];
+    });
+    setCartOpen(true);
+  }
+
   async function submitOrder(event) {
     event.preventDefault();
     if (!cart.length || submittingOrder) return;
@@ -192,7 +234,10 @@ function App() {
         id: item.product.id,
         name: item.product.name,
         quantity: item.quantity,
-        price: item.product.price
+        price: item.product.price,
+        type: item.product.type || 'catalog',
+        config: item.product.config || undefined,
+        geoSurum: item.product.geoSurum || undefined
       })),
       total
     };
@@ -204,6 +249,7 @@ function App() {
         body: JSON.stringify(data)
       });
       const orderNo = response.orderNo;
+      const confirmedTotal = Number(response.total);
       const lines = [
         'UMERA DESIGN 3D — YENİ SİPARİŞ',
         `Sipariş No: ${orderNo}`,
@@ -215,7 +261,7 @@ function App() {
         '',
         ...data.items.map(item => `${item.name} x${item.quantity} — ${money(item.price * item.quantity)}`),
         '',
-        `TOPLAM: ${money(total)}`
+        `TOPLAM: ${money(confirmedTotal)}`
       ].filter(Boolean).join('\n');
 
       setReceipt({ text: lines, orderNo });
@@ -326,6 +372,7 @@ function App() {
       await api('/api/auth-login', { method: 'POST', body: JSON.stringify(login) });
       setAdmin(true);
       setAdminLogin(false);
+      setDesignerOpen(false);
       setAdminOpen(true);
       setLogin({ username: '', password: '' });
     } catch (error) {
@@ -475,15 +522,33 @@ function App() {
             <div><b>UMERA</b><span>DESIGN 3D</span></div>
           </button>
           <nav aria-label="Ana menü">
-            <button className={`navbtn ${!adminOpen ? 'active' : ''}`} onClick={() => setAdminOpen(false)}>Katalog</button>
+            <button className={`navbtn ${!adminOpen && !designerOpen ? 'active' : ''}`} onClick={() => { setAdminOpen(false); setDesignerOpen(false); }}>Katalog</button>
+            <button className={`navbtn lampNav ${designerOpen ? 'active' : ''}`} onClick={() => { setAdminOpen(false); setDesignerOpen(true); }}>Abajur Tasarla</button>
             <button className="navbtn" onClick={() => setCustom(true)}>Özel Tasarım</button>
             <button className="cartbtn" onClick={() => setCartOpen(true)}>Sepet <i>{count}</i></button>
-            {admin && <button className="adminbtn" onClick={() => setAdminOpen(true)}>Admin</button>}
+            {admin && <button className="adminbtn" onClick={() => { setDesignerOpen(false); setAdminOpen(true); }}>Admin</button>}
           </nav>
         </div>
       </header>
 
-      {!adminOpen ? (
+      {designerOpen && !adminOpen ? (
+        <main className="designerPage">
+          <div className="designerTop wrap">
+            <div><div className="eyebrow">CANLI 3D ABAJUR STÜDYOSU</div><h1>Işığını kendin tasarla.</h1><p>Formu, ölçüyü, yüzeyi, rengi ve duy setini seç; fiyatı anında gör ve tasarımını sepete ekle.</p></div>
+            <button className="ghost" onClick={() => setDesignerOpen(false)}>← Kataloğa Dön</button>
+          </div>
+          <div className="abajurStudio">
+            <AbajurKonfigurator
+              onAddToCart={addAbajur}
+              baseUrl={typeof window !== 'undefined' ? `${window.location.origin}${window.location.pathname}` : ''}
+              fiyatUrl="/api/abajur-price"
+              stlIndirme="kapali"
+              filigran="UMERA DESIGN 3D"
+              yoneticiPaneli={false}
+            />
+          </div>
+        </main>
+      ) : !adminOpen ? (
         <main>
           <section className="hero wrap">
             <div className="heroCopy">
@@ -491,7 +556,7 @@ function App() {
               <h1>Hayal Et.<br /><em>Tasarla.</em><br />Gerçekleştir.</h1>
               <p>Modern ve kişiye özel 3D baskı ürünlerini keşfet. Hazır koleksiyondan seç veya fotoğrafını gönder; birlikte gerçeğe dönüştürelim.</p>
               <div className="heroActions">
-                <button className="primary" onClick={() => document.getElementById('featured')?.scrollIntoView({ behavior: 'smooth' })}>En Çok Tercih Edilenler <span>→</span></button>
+                <button className="primary" onClick={() => setDesignerOpen(true)}>Abajurunu Tasarla <span>→</span></button>
                 <button className="ghost" onClick={() => setCustom(true)}>Özel Tasarım İste</button>
               </div>
               <div className="heroProof"><span>✓ Sipariş numarasıyla takip</span><span>✓ Türkiye geneli gönderim</span></div>
@@ -505,6 +570,11 @@ function App() {
           </section>
 
           <TrustStrip />
+
+          <section className="lampPromo wrap">
+            <div className="lampPromoVisual" aria-hidden="true"><span /><i /></div>
+            <div><div className="eyebrow">YENİ · CANLI 3D TASARIM</div><h2>Hazır bir abajur seçme.<br /><em>Kendininkini oluştur.</em></h2><p>Profil, çap, yükseklik, desen, malzeme ve renk seçeneklerini gerçek zamanlı 3D önizlemede birleştir. Üretime uygun fiyatı görüp tek adımda siparişe dönüştür.</p><div className="lampPromoFacts"><span>Canlı 3D önizleme</span><span>Sunucuda doğrulanan fiyat</span><span>E14 / E27 seçenekleri</span></div><button className="primary" onClick={() => setDesignerOpen(true)}>Tasarım Stüdyosunu Aç →</button></div>
+          </section>
 
           <section id="featured" className="wrap featuredSection">
             <SectionTitle eyebrow="ÇOK TERCİH EDİLENLER" title={<>İlk bakışta <em>öne çıkanlar.</em></>} text="Popüler tasarımları incele, sepete ekle ve siparişini dakikalar içinde oluştur." />
@@ -603,7 +673,7 @@ function App() {
             {cart.length ? cart.map(item => (
               <div className="cartItem" key={item.product.id}>
                 <img src={item.product.image || '/logo-mark.webp'} alt={item.product.name} />
-                <div><b>{item.product.name}</b><small>{money(item.product.price)}</small><div className="step"><button onClick={() => qty(item.product.id, -1)}>−</button><span>{item.quantity}</span><button onClick={() => qty(item.product.id, 1)}>+</button></div></div>
+                <div><b>{item.product.name}</b>{item.product.type === 'abajur' && <small className="cartConfig">{item.product.description}</small>}<small>{money(item.product.price)}</small><div className="step"><button onClick={() => qty(item.product.id, -1)}>−</button><span>{item.quantity}</span><button onClick={() => qty(item.product.id, 1)}>+</button></div></div>
                 <button className="remove" onClick={() => remove(item.product.id)}>×</button>
               </div>
             )) : <div className="empty">Sepetin boş.</div>}
@@ -713,6 +783,7 @@ function ProcessSection({ onStart }) {
 
 function FAQSection() {
   const faqs = [
+    ['Abajur tasarımımı nasıl sipariş veririm?', 'Abajur Tasarla alanında ölçü, profil, desen, malzeme, renk ve duy tipini seç. Üretime uygun tasarımını sepete eklediğinde fiyat sunucuda yeniden doğrulanır ve normal sipariş akışına eklenir.'],
     ['Ürünler hazır stok mu?', 'Bazı ürünler stoktan, bazı ürünler sipariş üzerine üretilir. Güncel stok bilgisi ürün kartında görünür.'],
     ['Üretim ne kadar sürer?', 'Model, adet ve baskı süresine göre değişir. Standart ürünlerde tahmini süre çoğunlukla 2–5 iş günüdür; sipariş öncesinde teyit edilir.'],
     ['Renk veya boyut değiştirebilir miyim?', 'Uygun olan modellerde renk ve ölçü değişikliği yapılabilir. Ürün detayından veya WhatsApp üzerinden bilgi alabilirsin.'],
@@ -760,6 +831,25 @@ function AdminPanel({ stats, orders, customOrders, products, form, setForm, edit
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
   }
 
+  function downloadAbajurProduction(order, configuration, index) {
+    const payload = {
+      siparisNo: order.orderNo,
+      musteri: order.name,
+      adet: configuration.quantity,
+      geoSurum: configuration.geoSurum,
+      config: { ...configuration.config, adet: configuration.quantity },
+      ozet: configuration.summary,
+      isEmri: configuration.isEmri
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${order.orderNo}-abajur-${index + 1}.json`;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
   const filteredCustom = customOrders.filter(order => customFilter === 'Tümü' || order.status === customFilter);
 
   return (
@@ -779,7 +869,7 @@ function AdminPanel({ stats, orders, customOrders, products, form, setForm, edit
         <section className="panel editor"><div className="panelHead"><div><b>{edit ? 'Ürünü Düzenle' : 'Yeni Ürün'}</b><span>Bilgileri girip kaydet</span></div></div><form className="form" onSubmit={saveProduct}><Field label="Ürün adı *" value={form.name} onChange={event => setForm({ ...form, name: event.target.value })} required /><label>Kategori<select value={form.category} onChange={event => setForm({ ...form, category: event.target.value })}>{CATS.filter(item => item !== 'Tümü').map(category => <option key={category}>{category}</option>)}</select></label><div className="two"><Field label="Fiyat (TL) *" type="number" min="0" value={form.price} onChange={event => setForm({ ...form, price: event.target.value })} required /><Field label="Stok *" type="number" min="0" value={form.stock} onChange={event => setForm({ ...form, stock: event.target.value })} required /></div><label>Ürün Görseli<input type="file" accept="image/jpeg,image/png,image/webp" onChange={uploadImage} /></label>{imageUploading && <div className="notice">Görsel yükleniyor...</div>}{form.image && <img className="preview" src={form.image} alt="Önizleme" />}<Field label="Görsel URL (opsiyonel)" value={form.image} onChange={event => setForm({ ...form, image: event.target.value })} /><label>Açıklama<textarea rows="4" value={form.description} onChange={event => setForm({ ...form, description: event.target.value })} /></label><div className="two"><button className="primary">{edit ? 'Değişiklikleri Kaydet' : 'Ürünü Yayınla'}</button><button type="button" className="ghost" onClick={newProduct}>Temizle</button></div></form></section>
       </div>
 
-      <section className="panel orders"><div className="panelHead"><div><b>Sipariş Yönetimi</b><span>Google Sheets · son 100 kayıt · durum değişiklikleri anında kaydedilir</span></div></div><div className="tableWrap"><table><thead><tr><th>Sipariş</th><th>Müşteri</th><th>Ürünler</th><th>Tutar</th><th>Durum</th><th>İşlem</th></tr></thead><tbody>{orders.length ? orders.map(order => <tr key={order.orderNo}><td><b>{order.orderNo}</b><small>{new Date(order.date).toLocaleString('tr-TR')}</small></td><td><b>{order.name}</b><small>{order.phone}</small>{order.email && <small>{order.email}</small>}<small>{order.address}</small></td><td>{order.items}</td><td><b>{money(order.total)}</b></td><td><select className="statusSelect" value={order.status} onChange={event => updateOrder(order, event.target.value)}>{ORDER_STATUSES.map(status => <option key={status}>{status}</option>)}</select></td><td><div className="orderActions"><button className="shipBtn" onClick={() => notifyShipped(order)}>📦 Kargolandı + WhatsApp</button>{order.status !== 'Tamamlandı' && <button className="ghost smallBtn" onClick={() => updateOrder(order, 'Tamamlandı', true)}>✓ Tamamlandı + WhatsApp</button>}</div></td></tr>) : <tr><td colSpan="6" className="empty">Henüz sipariş yok.</td></tr>}</tbody></table></div></section>
+      <section className="panel orders"><div className="panelHead"><div><b>Sipariş Yönetimi</b><span>Google Sheets · son 100 kayıt · abajur üretim ayarları siparişle birlikte saklanır</span></div></div><div className="tableWrap"><table><thead><tr><th>Sipariş</th><th>Müşteri</th><th>Ürünler</th><th>Tutar</th><th>Durum</th><th>İşlem</th></tr></thead><tbody>{orders.length ? orders.map(order => <tr key={order.orderNo}><td><b>{order.orderNo}</b><small>{new Date(order.date).toLocaleString('tr-TR')}</small></td><td><b>{order.name}</b><small>{order.phone}</small>{order.email && <small>{order.email}</small>}<small>{order.address}</small></td><td>{order.items}{order.configurations?.length > 0 && <small className="productionBadge">◈ {order.configurations.length} üretim dosyası hazır</small>}</td><td><b>{money(order.total)}</b></td><td><select className="statusSelect" value={order.status} onChange={event => updateOrder(order, event.target.value)}>{ORDER_STATUSES.map(status => <option key={status}>{status}</option>)}</select></td><td><div className="orderActions">{order.configurations?.map((configuration, index) => <button key={`${order.orderNo}-${index}`} className="productionBtn" onClick={() => downloadAbajurProduction(order, configuration, index)}>◈ Abajur {index + 1} Üretim JSON</button>)}<button className="shipBtn" onClick={() => notifyShipped(order)}>📦 Kargolandı + WhatsApp</button>{order.status !== 'Tamamlandı' && <button className="ghost smallBtn" onClick={() => updateOrder(order, 'Tamamlandı', true)}>✓ Tamamlandı + WhatsApp</button>}</div></td></tr>) : <tr><td colSpan="6" className="empty">Henüz sipariş yok.</td></tr>}</tbody></table></div></section>
 
       <section className="panel customOrdersAdmin"><div className="panelHead"><div><b>Özel Tasarım Talepleri</b><span>Google Sheets → CustomOrders · müşterilerin gönderdiği fotoğraflar ve talepler</span></div><div className="customFilters">{['Tümü', ...CUSTOM_STATUSES].map(status => <button key={status} className={customFilter === status ? 'chip active' : 'chip'} onClick={() => setCustomFilter(status)}>{status}</button>)}</div></div><div className="customCards">{filteredCustom.length ? filteredCustom.map(order => <article className="customOrderCard" key={order.requestNo} onClick={() => setSelectedCustom(order)}><div className="customOrderTop"><div><b>{order.requestNo}</b><small>{new Date(order.date).toLocaleString('tr-TR')}</small></div><span className="status">{order.status}</span></div><div className="customOrderBody"><div><b>{order.name}</b><small>{order.phone || order.email || 'İletişim yok'}</small><p>{order.details}</p><small>Ölçü: {order.dimensions || '-'} · Renk: {order.color || '-'} · Adet: {order.quantity}</small></div><div className="customThumbs">{order.images?.slice(0, 3).map((url, index) => <img key={url} src={url} alt={`Referans ${index + 1}`} />)}{order.images?.length > 3 && <span>+{order.images.length - 3}</span>}</div></div><div className="customOrderActions"><select className="statusSelect" value={order.status} onClick={event => event.stopPropagation()} onChange={event => { event.stopPropagation(); updateCustom(order, event.target.value); }}>{CUSTOM_STATUSES.map(status => <option key={status}>{status}</option>)}</select>{order.phone && <button className="ghost smallBtn" onClick={event => { event.stopPropagation(); customWhatsApp(order); }}>WhatsApp</button>}</div></article>) : <div className="empty">Bu filtrede özel tasarım talebi yok.</div>}</div></section>
 

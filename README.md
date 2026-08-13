@@ -1,5 +1,21 @@
 # Umera Design 3D — Vercel Final
 
+## 3D abajur tasarım ve sipariş akışı
+
+- Üst menüdeki **Abajur Tasarla** bağlantısı canlı Three.js yapılandırıcısını açar.
+- Müşteri profil, ölçü, desen, malzeme, renk, E14/E27 duy ve paket seçimini gerçek zamanlı önizler.
+- Sepete ekleme sırasında `/api/abajur-price` seçimi sunucuda yeniden doğrular ve fiyatı aynı geometri üzerinden hesaplar.
+- Abajur, standart ürünlerle aynı sepette ve aynı sipariş formunda satın alınabilir.
+- Siparişin tam üretim yapılandırması Google Sheets `Orders` sayfasındaki `yapilandirma_json` sütununda saklanır.
+- Yönetici panelinde her abajur için **Üretim JSON** düğmesi görünür. İndirilen dosya `node lib/siparis-stl.mjs siparis.json ./cikti` komutuyla STL ve iş emrine dönüştürülür.
+- Müşteri STL dosyasını indiremez; üretim modeli yalnızca kaydedilen sipariş yapılandırmasından oluşturulur.
+
+### Orders sütunları
+
+`siparis_no | tarih | musteri | telefon | email | adres | not | urunler | toplam | durum | yapilandirma_json`
+
+> Mevcut `Orders` sayfasında yeni K sütunu ve başlığı uygulama tarafından otomatik olarak eklenir.
+
 Bu sürüm SQL/PostgreSQL veya müşteri üyeliği kullanmaz. Ürün ve sipariş verileri Google Sheets'te tutulur; görseller Vercel Blob'a yüklenir. Frontend ve API aynı Vercel projesindedir.
 
 ## Özellikler
@@ -69,7 +85,10 @@ UMERA_PUBLIC_STORE_ID=...
 UMERA_PUBLIC_READ_WRITE_TOKEN=...
 VITE_WHATSAPP_NUMBER=905XXXXXXXXX
 VITE_COMPANY_EMAIL=siparis@umeradesign3d.com
+VITE_SITE_OPEN=true
 ```
+
+`VITE_SITE_OPEN` varsayılan olarak açıktır. Bakım ekranını göstermek istersen Vercel'de bu değeri `false` yap.
 
 `GOOGLE_PRIVATE_KEY` içindeki satır sonlarını Vercel'e genellikle `\\n` olarak girmek gerekir; kod bunları gerçek satır sonuna çevirir.
 

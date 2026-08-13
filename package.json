@@ -5,17 +5,18 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build --configLoader runner",
     "preview": "vite preview",
     "hash-password": "node scripts/hash-password.js"
   },
   "dependencies": {
     "@vercel/blob": "^2.6.1",
     "bcryptjs": "^3.0.2",
-    "googleapis": "^148.0.0",
+    "googleapis": "^174.0.1",
     "jose": "^6.0.12",
     "react": "^19.1.1",
-    "react-dom": "^19.1.1"
+    "react-dom": "^19.1.1",
+    "three": "^0.179.1"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.6.0",

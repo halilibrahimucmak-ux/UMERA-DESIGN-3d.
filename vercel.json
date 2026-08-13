@@ -14,7 +14,7 @@
       ]
     },
     {
-      "source": "/(logo-hero.webp|logo-mark.webp|favicon.png|og-image.png)",
+      "source": "/(logo-hero.webp|logo-mark.webp|favicon.png|og.png)",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
       ]
