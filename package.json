@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build --configLoader runner",
+    "test": "node --test tests/*.test.mjs",
     "preview": "vite preview",
     "hash-password": "node scripts/hash-password.js"
   },

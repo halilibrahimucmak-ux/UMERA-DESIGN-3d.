@@ -109,7 +109,13 @@ Not: WhatsApp ve mail uygulamasını açmak tarayıcı/cihaz davranışına bağ
 
 Admin panelindeki Sipariş Yönetimi bölümünden sipariş durumu değiştirilebilir. Durumlar Google Sheets `Orders` sayfasındaki `durum` sütununa yazılır: `Yeni`, `Onaylandı`, `Hazırlanıyor`, `Kargoya Hazır`, `Kargolandı`, `Tamamlandı`, `İptal`.
 
-`Kargolandı + WhatsApp` veya `Tamamlandı + WhatsApp` butonu sipariş durumunu kaydeder ve müşterinin telefon numarasına göre WhatsApp Web/app üzerinde hazır mesajı açar. Tarayıcı güvenlikleri nedeniyle son `Gönder` işlemi WhatsApp tarafında kullanıcı tarafından onaylanır; bu sürüm WhatsApp Cloud API kullanmaz.
+Sipariş durumu `Onaylandı`, `Hazırlanıyor`, `Kargoya Hazır`, `Kargolandı`, `Tamamlandı` veya `İptal` olarak değiştirildiğinde müşteri bildirimi otomatik tetiklenir. WhatsApp Business Cloud API ve/veya Resend ayarlıysa mesaj doğrudan gönderilir. Hiçbir otomatik kanal ayarlı değilse admin ekranı müşterinin numarası için hazır WhatsApp mesajını açar; son `Gönder` işlemi kullanıcı tarafından onaylanır. Aynı durum yeniden seçilirse yinelenen bildirim gönderilmez.
+
+### Otomatik durum bildirimi
+
+Resend ile e-posta göndermek için Vercel ortam değişkenlerine `RESEND_API_KEY` ve doğrulanmış alan adını kullanan `ORDER_NOTIFICATION_FROM` ekleyin.
+
+WhatsApp Business Cloud API ile otomatik mesaj göndermek için `WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_STATUS_TEMPLATE_NAME`, `WHATSAPP_STATUS_TEMPLATE_LANGUAGE` ve isteğe bağlı `WHATSAPP_GRAPH_VERSION` değerlerini ekleyin. Onaylı şablonun gövdesindeki değişkenler sırasıyla müşteri adı (`{{1}}`), sipariş numarası (`{{2}}`) ve durum (`{{3}}`) olmalıdır. Örnek: `Merhaba {{1}}, {{2}} numaralı siparişinizin durumu {{3}} olarak güncellendi.`
 
 Siparişler `Orders` sayfasında şu sütunlarla tutulur: `siparis_no | tarih | musteri | telefon | email | adres | not | urunler | toplam | durum`.
 

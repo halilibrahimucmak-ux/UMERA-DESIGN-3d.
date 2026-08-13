@@ -2,6 +2,7 @@ import { appendOrder, getProducts, updateOrderStatus } from '../lib/sheets.js';
 import { requireAdmin } from '../lib/auth.js';
 import { enforceRateLimit, setRateLimitResponse } from '../lib/rate-limit.js';
 import { quoteAbajur } from '../lib/abajur.js';
+import { sendOrderStatusNotification } from '../lib/notifications.js';
 
 function cleanText(value, max = 500) {
   return String(value || '').trim().slice(0, max);
@@ -63,7 +64,8 @@ export default async function handler(req, res) {
       const body = req.body || {};
       if (!body.orderNo || !body.status) return res.status(400).json({ error: 'Sipariş numarası ve durum gerekli.' });
       const order = await updateOrderStatus(String(body.orderNo), String(body.status));
-      return res.json({ ok: true, order });
+      const notification = await sendOrderStatusNotification(order);
+      return res.json({ ok: true, order, notification });
     }
 
     return res.status(405).json({ error: 'Method not allowed' });
