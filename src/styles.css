@@ -14,7 +14,15 @@
 
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
-body { margin: 0; background: var(--bg); color: var(--white); font-family: Inter, system-ui, sans-serif; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--white);
+  font-family: Inter, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
 body, button, input, textarea, select { font: inherit; }
 button { cursor: pointer; }
 button:disabled { cursor: not-allowed; }
@@ -88,6 +96,64 @@ nav { display: flex; align-items: center; gap: 8px; }
 .designerTop h1 { margin: 0; font-size: clamp(36px,5vw,64px); letter-spacing: -.05em; }
 .designerTop p { max-width: 680px; margin: 13px 0 0; color: #aaa096; line-height: 1.65; }
 .abajurStudio { border-top: 1px solid #332c26; border-bottom: 1px solid #332c26; position: relative; }
+.abajurStudio .abajurRange {
+  appearance: none;
+  -webkit-appearance: none;
+  display: block;
+  height: 28px;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+  touch-action: pan-y;
+}
+.abajurStudio .abajurRange::-webkit-slider-runnable-track {
+  height: 5px;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    var(--range-accent) 0 var(--range-progress),
+    rgba(255,255,255,.16) var(--range-progress) 100%
+  );
+  box-shadow: inset 0 1px 2px rgba(0,0,0,.38);
+}
+.abajurStudio .abajurRange::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 17px;
+  height: 17px;
+  margin-top: -7px;
+  border: 2px solid #1a1613;
+  border-radius: 50%;
+  background: var(--range-accent);
+  box-shadow: 0 0 0 2px rgba(255,255,255,.16), 0 3px 10px rgba(0,0,0,.45);
+}
+.abajurStudio .abajurRange::-moz-range-track {
+  height: 5px;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 999px;
+  background: rgba(255,255,255,.16);
+  box-shadow: inset 0 1px 2px rgba(0,0,0,.38);
+}
+.abajurStudio .abajurRange::-moz-range-progress {
+  height: 5px;
+  border-radius: 999px;
+  background: var(--range-accent);
+}
+.abajurStudio .abajurRange::-moz-range-thumb {
+  width: 15px;
+  height: 15px;
+  border: 2px solid #1a1613;
+  border-radius: 50%;
+  background: var(--range-accent);
+  box-shadow: 0 0 0 2px rgba(255,255,255,.16), 0 3px 10px rgba(0,0,0,.45);
+}
+.abajurStudio .abajurRange:focus-visible {
+  outline: 2px solid var(--range-accent);
+  outline-offset: 3px;
+  border-radius: 999px;
+}
 .cartConfig { max-width: 480px; color: #cbbda8 !important; line-height: 1.45; }
 .productionBadge { display: block; margin-top: 8px; color: #efc78d !important; }
 .productionBtn { border: 1px solid rgba(239,199,141,.24); border-radius: 9px; padding: 9px 10px; background: rgba(239,199,141,.1); color: #f2d4a8; font-weight: 800; font-size: 11px; }

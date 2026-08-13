@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import * as THREE from "three";
+import { toCreasedNormals } from "three/addons/utils/BufferGeometryUtils.js";
 
 /* ------------------------------------------------------------------ *
  *  ABAJUR KONFİGÜRATÖRÜ
@@ -155,13 +156,13 @@ const GEO_SURUM = "2.0";
 /* --------------------------- GEOMETRİ ----------------------------- */
 
 function segmentSayisi(p) {
-  if (p.desen === "faset") return Math.max(64, p.nervurSayisi * 6);
-  if (p.desen === "duz") return 160;
-  return Math.min(360, Math.max(144, p.nervurSayisi * 8));
+  if (p.desen === "faset") return Math.max(96, p.nervurSayisi * 8);
+  if (p.desen === "duz") return 256;
+  return Math.min(480, Math.max(220, p.nervurSayisi * 12));
 }
 function satirSayisi(p) {
   const egri = p.profil !== "duz" || p.desen === "dalga" || Math.abs(p.burgu) > 0.5;
-  return egri ? 112 : 40;
+  return egri ? 176 : 72;
 }
 
 // Yüksekliğe göre temel yarıçap (mm)
@@ -342,8 +343,7 @@ function birlestir(geoler) {
   }
   const g = new THREE.BufferGeometry();
   g.setAttribute("position", new THREE.BufferAttribute(pos, 3));
-  g.computeVertexNormals();
-  return g;
+  return toCreasedNormals(g, Math.PI / 3);
 }
 
 /** Merkezden gövdeye uzanan kıvrımlı ve ortası incelen yaprak taşıyıcı. */
@@ -628,6 +628,7 @@ function Etiket({ children, sag }) {
 }
 
 function Kaydirac({ etiket, birim, deger, min, max, adim = 1, onChange, accent }) {
+  const ilerleme = max > min ? ((deger - min) / (max - min)) * 100 : 0;
   return (
     <div className="mb-5">
       <Etiket sag={`${deger}${birim || ""}`}>{etiket}</Etiket>
@@ -638,8 +639,8 @@ function Kaydirac({ etiket, birim, deger, min, max, adim = 1, onChange, accent }
         step={adim}
         value={deger}
         onChange={(e) => onChange(parseFloat(e.target.value))}
-        className="w-full"
-        style={{ accentColor: accent, height: 22 }}
+        className="w-full abajurRange"
+        style={{ "--range-accent": accent, "--range-progress": `${Math.max(0, Math.min(100, ilerleme))}%` }}
         aria-label={etiket}
       />
     </div>
@@ -922,8 +923,15 @@ export default function AbajurKonfigurator({
       antialias: true,
       alpha: false,
       preserveDrawingBuffer: false,
+      powerPreference: "high-performance",
+      precision: "highp",
     });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    const cihazPikselOrani = window.devicePixelRatio || 1;
+    const dokunmatik = window.matchMedia?.("(pointer: coarse)").matches;
+    const kaliteOrani = dokunmatik
+      ? Math.min(2, Math.max(1.5, cihazPikselOrani))
+      : Math.min(2.5, Math.max(1.75, cihazPikselOrani));
+    renderer.setPixelRatio(kaliteOrani);
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -933,6 +941,7 @@ export default function AbajurKonfigurator({
     renderer.domElement.style.display = "block";
     renderer.domElement.style.width = "100%";
     renderer.domElement.style.height = "100%";
+    renderer.domElement.style.imageRendering = "auto";
     renderer.domElement.style.touchAction = "none";
     renderer.domElement.draggable = false;
     const engelle = (e) => e.preventDefault();
@@ -1052,7 +1061,7 @@ export default function AbajurKonfigurator({
       color: 0xede4d3,
       roughness: 0.6,
       metalness: 0.05,
-      flatShading: true,
+      flatShading: false,
       envMapIntensity: 0.5,
       side: THREE.DoubleSide,
     });
@@ -1480,9 +1489,9 @@ export default function AbajurKonfigurator({
 
         <Bolum no="02" baslik="Gövde">
           <Secim etiket="Profil" secenekler={PROFILLER} deger={p.profil} onChange={(v) => set("profil", v)} accent={accent} />
-          <Kaydirac etiket="Alt çap" birim=" mm" deger={p.altCap} min={80} max={sinir.capMax} onChange={(v) => set("altCap", v)} accent={accent} />
-          <Kaydirac etiket="Üst çap" birim=" mm" deger={p.ustCap} min={duy.minUstCap} max={sinir.capMax} onChange={(v) => set("ustCap", v)} accent={accent} />
           <Kaydirac etiket="Yükseklik" birim=" mm" deger={p.yukseklik} min={80} max={sinir.yukseklikMax} onChange={(v) => set("yukseklik", v)} accent={accent} />
+          <Kaydirac etiket="Üst çap" birim=" mm" deger={p.ustCap} min={duy.minUstCap} max={sinir.capMax} onChange={(v) => set("ustCap", v)} accent={accent} />
+          <Kaydirac etiket="Alt çap" birim=" mm" deger={p.altCap} min={80} max={sinir.capMax} onChange={(v) => set("altCap", v)} accent={accent} />
           {(p.profil === "fici" || p.profil === "kumsaati") && (
             <Kaydirac etiket="Bel miktarı" birim=" mm" deger={p.bel} min={0} max={sinir.belMax} onChange={(v) => set("bel", v)} accent={accent} />
           )}
