@@ -17,6 +17,8 @@ import {
   duvarSayisi,
   olcum,
   disR,
+  DUY_MONTAJ,
+  AYAK_GOMME,
 } from '../lib/abajur-geometri.mjs';
 import { normalizeAbajurConfig, quoteAbajur } from '../lib/abajur.js';
 import { uret } from '../lib/siparis-stl.mjs';
@@ -107,6 +109,42 @@ test('üçgenler dilimleyicide denetlenebilir ve boyanabilir oranda kalır', () 
       satirYuksekligi / cevreselAdim <= 6,
       `${ad}: üçgen en/boy oranı ${(satirYuksekligi / cevreselAdim).toFixed(1)}:1 çok yüksek`
     );
+  }
+});
+
+test('üst yaka desensizdir ve taşıyıcı ayak duvarı delmez', () => {
+  // Yaka olmadan ayak ucu, desenin dalgalı yüzeyine oturuyordu: 12.5 mm
+  // genişliğindeki ucun bir kenarı nervür tepesine, öbürü vadisine denk
+  // gelip dış duvarı 1.6 mm'ye kadar delip çıkıyordu.
+  for (const [ad, ayar] of SENARYOLAR) {
+    const p = normalizeAbajurConfig(ayar);
+    const duy = DUY_MONTAJ[p.duyTipi];
+
+    // 1. üst halka gerçek bir daire mi?
+    let min = Infinity, max = -Infinity;
+    for (let c = 0; c < 360; c++) {
+      const r = disR((c / 360) * Math.PI * 2, 1, p);
+      min = Math.min(min, r);
+      max = Math.max(max, r);
+    }
+    assert.ok(max - min < 0.01, `${ad}: üst halka dairesel değil (${(max - min).toFixed(2)} mm dalgalanma)`);
+
+    // 2. ayak ucu, genişliği boyunca dış yüzeyin içinde mi kalıyor?
+    const gomme = Math.min(AYAK_GOMME, p.cidar * 0.85);
+    for (let i = 0; i < duy.ayakSayisi; i++) {
+      const th = (i / duy.ayakSayisi) * Math.PI * 2;
+      const rDis = disR(th, 1, p) - p.cidar + gomme;
+      const yariAci = duy.ayakUc / 2 / rDis;
+      for (let j = -8; j <= 8; j++) {
+        const a = th + (yariAci * j) / 8;
+        assert.ok(
+          rDis <= disR(a, 1, p) - 0.02,
+          `${ad}: ayak ${i} dış duvarı ${(rDis - disR(a, 1, p)).toFixed(2)} mm deliyor`
+        );
+      }
+      // yeterince gömülü mü? (zayıf birleşim olmasın)
+      assert.ok(gomme >= p.cidar * 0.6, `${ad}: ayak duvara yeterince gömülmüyor`);
+    }
   }
 });
 

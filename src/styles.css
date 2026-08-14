@@ -941,3 +941,48 @@ td small { display: block; color: #727889; margin-top: 4px; }
   padding: 2px 6px; border-radius: 5px; background: rgba(0,0,0,.3);
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px;
 }
+
+/* ------------------------------------------------------------------ *
+   HUKUKİ METİNLER
+ * ------------------------------------------------------------------ */
+
+.footerYasal {
+  display: flex; flex-wrap: wrap; gap: 6px 20px; padding: 18px 0 4px; margin-top: 22px;
+  border-top: 1px solid var(--line); font-size: 11.5px; color: #7d8394;
+}
+.footer a { color: var(--muted); text-decoration: none; }
+.footer a:hover { color: var(--white); text-decoration: underline; }
+
+.hukukKok { display: grid; grid-template-columns: 232px 1fr; gap: 22px; }
+.hukukMenu { display: flex; flex-direction: column; gap: 4px; }
+.hukukMenu button {
+  text-align: left; padding: 11px 13px; border-radius: 10px; border: 1px solid transparent;
+  background: none; color: var(--muted); font-size: 12.5px; line-height: 1.4;
+}
+.hukukMenu button:hover { background: rgba(255,255,255,.05); color: var(--white); }
+.hukukMenu button.aktif { background: rgba(255,255,255,.07); border-color: var(--line); color: var(--white); font-weight: 700; }
+
+.hukukIcerik { max-height: 62vh; overflow-y: auto; padding-right: 8px; }
+.hukukIcerik h3 { margin: 0 0 18px; font-size: 19px; letter-spacing: -.02em; }
+.hukukIcerik section { margin-bottom: 20px; }
+.hukukIcerik section.vurgu {
+  padding: 15px 16px; border-radius: 12px;
+  background: rgba(224,164,76,.09); border: 1px solid rgba(224,164,76,.3);
+}
+.hukukIcerik h4 { margin: 0 0 8px; font-size: 13px; letter-spacing: .05em; text-transform: uppercase; color: #b9bfd0; }
+.hukukIcerik section.vurgu h4 { color: #f0cd94; }
+.hukukIcerik p { margin: 0; font-size: 13.5px; line-height: 1.75; color: #cdd2e0; }
+.hukukIcerik ul { margin: 0; padding-left: 19px; }
+.hukukIcerik li { font-size: 13.5px; line-height: 1.7; color: #cdd2e0; margin-bottom: 7px; }
+.hukukGuncelleme { font-size: 11.5px !important; color: #7d8394 !important; padding-top: 14px; border-top: 1px solid var(--line); }
+
+.notice.uyari { background: rgba(224,164,76,.1); border-color: rgba(224,164,76,.32); color: #f0cd94; }
+.consent a { color: #b6a4ff; text-decoration: underline; }
+.consent a:hover { color: #d4c8ff; }
+
+@media (max-width: 720px) {
+  .hukukKok { grid-template-columns: 1fr; gap: 14px; }
+  .hukukMenu { flex-direction: row; flex-wrap: wrap; }
+  .hukukMenu button { flex: 1 1 44%; font-size: 11.5px; padding: 9px 10px; }
+  .hukukIcerik { max-height: none; }
+}

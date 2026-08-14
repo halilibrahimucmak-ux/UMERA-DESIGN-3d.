@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import './styles.css';
 import MaintenancePage from './MaintenancePage.jsx';
 import { sikistir, boyutYazisi } from './lib/gorsel.js';
+import { hukukMetinleri, firmaBilgisi, eksikBilgiVar } from './lib/hukuk.js';
 
 // Konfigüratör three.js ile birlikte ~600 KB. Katalogla gelen ziyaretçiyi
 // bekletmemek için yalnızca tasarım stüdyosu açıldığında indiriliyor.
@@ -168,6 +169,8 @@ function App() {
   const [logoClicks, setLogoClicks] = useState([]);
   const [selectedImage, setSelectedImage] = useState(null);
   const [productDetail, setProductDetail] = useState(null);
+  const [hukuk, setHukuk] = useState('');
+  const firma = useMemo(() => firmaBilgisi(), []);
 
   const loadProducts = async () => {
     setLoading(true);
@@ -733,11 +736,20 @@ function App() {
           <div className="footerBrand"><img src="/logo-mark.webp" alt="UMERA Design 3D" width="90" height="90" /><p>Hayal Et, Tasarla, Gerçekleştir.</p></div>
           <div><b>Sipariş ve destek</b><span>{EMAIL}</span>{WA && <a href={`https://wa.me/${WA}`} target="_blank" rel="noreferrer">WhatsApp ile iletişim</a>}<span>Türkiye geneli güvenli gönderim</span></div>
           <div><b>Üretim bilgisi</b><span>Ürünler stok ve sipariş durumuna göre hazırlanır.</span><span>Tahmini üretim süresi ürün ve adet bazında teyit edilir.</span></div>
+          <div><b>Bilgilendirme</b>{HUKUK.map(b => <a key={b.id} href="#" onClick={event => { event.preventDefault(); setHukuk(b.id); }}>{b.baslik}</a>)}</div>
           <div><b>Resmî Web Sitesi</b><span>© 2026 UMERA Design 3D. Tüm hakları saklıdır.</span><span>Marka, logo, tasarım, metin ve görseller izinsiz kopyalanamaz veya ticari amaçla kullanılamaz.</span></div>
+        </div>
+        <div className="wrap footerYasal">
+          <span>{firma.unvan}</span>
+          <span>{firma.adres}</span>
+          <span>{firma.vergi}</span>
+          {firma.mersis && <span>MERSİS: {firma.mersis}</span>}
         </div>
       </footer>
 
       {WA && <a className="whatsappFloat" href={`https://wa.me/${WA}?text=${encodeURIComponent('Merhaba, UMERA Design 3D ürünleri hakkında bilgi almak istiyorum.')}`} target="_blank" rel="noreferrer" aria-label="WhatsApp ile iletişim"><span>WhatsApp</span><b>✆</b></a>}
+
+      {hukuk && <HukukModal acikId={hukuk} close={() => setHukuk('')} />}
 
       {selectedImage && <ImageLightbox image={selectedImage} close={() => setSelectedImage(null)} />}
 
@@ -780,8 +792,9 @@ function App() {
             <Field name="email" label="E-posta" type="email" />
             <label>Adres *<textarea name="address" required rows="3" /></label>
             <label>Sipariş Notu<textarea name="note" rows="2" placeholder="Renk, teslimat veya ürün notu..." /></label>
-            <label className="consent"><input type="checkbox" required /> <span>Sipariş bilgilerimin talebimin işlenmesi amacıyla kaydedilmesini kabul ediyorum.</span></label>
-            <div className="notice">Sipariş önce sisteme kaydedilir ve size benzersiz bir sipariş numarası verilir.</div>
+            <label className="consent"><input type="checkbox" required /> <span><a href="#" onClick={event => { event.preventDefault(); setHukuk('mesafeli'); }}>Mesafeli Satış Sözleşmesi</a>, <a href="#" onClick={event => { event.preventDefault(); setHukuk('iade'); }}>İptal ve İade Koşulları</a> ve <a href="#" onClick={event => { event.preventDefault(); setHukuk('kvkk'); }}>KVKK Aydınlatma Metni</a>'ni okudum, kabul ediyorum.</span></label>
+            <div className="notice">Sipariş önce sisteme kaydedilir ve size benzersiz bir sipariş numarası verilir. Ödeme bilgileri sipariş fişinde görünür.</div>
+            <div className="notice uyari">Kişiye özel üretilen ürünlerde, üretim başladıktan sonra cayma hakkı kullanılamaz (Mesafeli Sözleşmeler Yönetmeliği m.15/1-b). Üretim başlamadan önce siparişini ücretsiz iptal edebilirsin.</div>
             <div className="two"><button className="primary" name="channel" value="whatsapp" disabled={!WA || submittingOrder}>{submittingOrder ? 'Kaydediliyor...' : 'WhatsApp'}</button><button className="ghost" name="channel" value="email" disabled={submittingOrder}>E-posta</button></div>
             <small className="channelHint">Toplam: {money(total)}</small>
           </form>
@@ -893,6 +906,47 @@ function OdemeKarti({ odeme }) {
         dekontunu WhatsApp'tan iletirsen onayı daha hızlı veririz.
       </p>
     </div>
+  );
+}
+
+const HUKUK = hukukMetinleri();
+
+/** Site altındaki hukuki metinler — tek modal, sol tarafta belge listesi. */
+function HukukModal({ acikId, close }) {
+  const [secili, setSecili] = useState(acikId || HUKUK[0].id);
+  const belge = HUKUK.find(b => b.id === secili) || HUKUK[0];
+
+  return (
+    <Modal title="Bilgilendirme ve Sözleşmeler" close={close} wide>
+      <div className="hukukKok">
+        <nav className="hukukMenu">
+          {HUKUK.map(b => (
+            <button
+              key={b.id}
+              type="button"
+              className={b.id === secili ? 'aktif' : ''}
+              onClick={() => setSecili(b.id)}
+            >
+              {b.baslik}
+            </button>
+          ))}
+        </nav>
+
+        <article className="hukukIcerik">
+          <h3>{belge.baslik}</h3>
+          {belge.bolumler.map(bolum => (
+            <section key={bolum.baslik} className={bolum.vurgu ? 'vurgu' : undefined}>
+              <h4>{bolum.baslik}</h4>
+              {bolum.paragraf && <p>{bolum.paragraf}</p>}
+              {bolum.maddeler && (
+                <ul>{bolum.maddeler.map(m => <li key={m}>{m}</li>)}</ul>
+              )}
+            </section>
+          ))}
+          <p className="hukukGuncelleme">Son güncelleme: {new Date().getFullYear()}</p>
+        </article>
+      </div>
+    </Modal>
   );
 }
 
@@ -1099,6 +1153,14 @@ function AdminPanel({ stats, orders, customOrders, odeme, products, form, setFor
   return (
     <main className="adminPage wrap">
       <div className="adminTop"><div><div className="eyebrow">YÖNETİM MERKEZİ</div><h1>UMERA <em>Admin</em></h1><p>Ürünlerini, siparişlerini ve özel tasarım taleplerini tek yerden yönet.</p></div><div className="adminActions"><button className="ghost" onClick={loadDashboard}>↻ Yenile</button><button className="ghost" onClick={logout}>Çıkış</button></div></div>
+      {eksikBilgiVar() && (
+        <div className="odemeUyari kritik">
+          ⚠ Hukuki metinlerde firma bilgileri eksik; müşteriye köşeli parantezli yer tutucular
+          görünüyor. Vercel ortam değişkenlerine <code>VITE_FIRMA_UNVAN</code>,{' '}
+          <code>VITE_FIRMA_ADRES</code>, <code>VITE_FIRMA_VERGI</code> ve <code>VITE_FIRMA_TEL</code>{' '}
+          ekleyip yeniden dağıt. Metinler taslaktır, yayına almadan avukat kontrolünden geçir.
+        </div>
+      )}
       {!odeme && (
         <div className="odemeUyari">
           ⚠ Havale bilgisi tanımlı değil. Müşteriler sipariş fişinde IBAN göremiyor. Vercel ortam

@@ -29,6 +29,21 @@ STL üretimi Bambu X2D için hazırlanmıştır ve şunları garanti eder:
 
 Yazıcı değişirse `lib/abajur-geometri.mjs` içindeki `TABLA` sabitini güncelle; tüm ölçü sınırları ve uyarılar oradan türer.
 
+
+### Taşıyıcı birleşimi ve üst yaka
+
+Üst halkada, desenin yumuşakça sıfıra indiği ~14 mm yüksekliğinde desensiz bir yaka bandı vardır.
+Yaprak taşıyıcılar gövdeye burada bağlanır.
+
+Bu bant zorunlu: yaka olmadan ayak ucu, deseni takip eden dalgalı bir yüzeye oturuyordu. Ayak ucu
+12,5 mm genişliğinde olduğu için bir kenarı nervür tepesine, öbür kenarı vadisine denk geliyor ve
+uç dış duvarı 1,6 mm'ye kadar delip dışarı sivri bir çıkıntı olarak çıkıyordu. Yaka sayesinde üst halka
+gerçek bir daire oluyor ve ayak tüm genişliği boyunca aynı yüzeye temiz oturuyor. Klasik
+abajurlarda metal "spider" fitter da düz bir halkaya bağlanır; bu bant o rolü üstlenir.
+
+Ayak ucu ayrıca duvar kalınlığının %85'i kadar gömülür: güçlü bir kaynaşma sağlar ama dış yüzeyin
+içinde kalır, yüzeyde kabartı bırakmaz.
+
 ### Vercel 4,5 MB sınırı
 
 Vercel serverless fonksiyonlarında istek ve yanıt gövdesi 4,5 MB ile sınırlıdır. İki yönde de çözüldü:
@@ -111,6 +126,41 @@ IBAN, ISO 7064 mod-97 sağlamasından geçirilir. Sağlama tutmazsa ödeme kart�
 > WhatsApp Business Cloud API şablonları serbest metin kabul etmez; onaylı şablon yalnızca
 > durum adını taşır. IBAN'ın otomatik WhatsApp mesajında da geçmesini istiyorsan ödeme için
 > ayrı bir şablon onaylatman gerekir. Resend ile giden e-posta IBAN'ı zaten içerir.
+
+## Site altındaki hukuki metinler
+
+Site altında dört belge bulunur: Mesafeli Satış Sözleşmesi, Cayma Hakkı / İptal ve İade
+Koşulları, KVKK Aydınlatma Metni, Teslimat ve Kargo. Metinler `src/lib/hukuk.js` içindedir;
+sipariş formundaki onay kutusu bunlara bağlıdır.
+
+> **Bu metinler taslaktır.** Standart yapıda hazırlanmıştır ama yayına almadan önce bir
+> avukat ve mali müşavir kontrolünden geçirilmeli, işletmenin gerçek süreçleriyle (teslim
+> süresi, kargo firması, iade adresi) uyumlu hale getirilmelidir. Eksik veya yanlış
+> bilgilendirme 6502 sayılı Kanun kapsamında idari yaptırım doğurabilir.
+
+Havale ile satışta müşteri ürünü görmeden ödeme yaptığı için iki nokta özellikle önemli:
+
+- **Kişiye özel üretimde cayma hakkı.** Mesafeli Sözleşmeler Yönetmeliği m.15/1-(b) uyarınca
+  tüketicinin istekleri doğrultusunda hazırlanan mallar cayma hakkı kapsamı dışındadır. Bu
+  istisna hem iade metninde hem de sipariş formunda müşteriye açıkça gösterilir; sipariş
+  öncesi bilgilendirme yapılmazsa istisnaya dayanılamaz.
+- **Üretim başlamadan ücretsiz iptal.** Metinler, ödeme alınmış ama üretim başlamamış
+  siparişlerde ücretsiz iptal ve 14 gün içinde iade taahhüdü içerir.
+
+Firma bilgileri ortam değişkenlerinden gelir:
+
+```text
+VITE_FIRMA_UNVAN=Firma Unvanı
+VITE_FIRMA_ADRES=Tam adres
+VITE_FIRMA_VERGI=Vergi Dairesi / 1234567890
+VITE_FIRMA_MERSIS=
+VITE_FIRMA_TEL=+90 5XX XXX XX XX
+VITE_TESLIM_GUN=2-5 iş günü
+```
+
+Eksik bırakılırsa metinlerde köşeli parantezli yer tutucular görünür ve yönetici panelinde
+kırmızı uyarı çıkar. `VITE_` önekli değişkenler derleme anında paket içine gömüldüğü için
+değiştirdikten sonra yeniden dağıtım gerekir.
 
 ## Google Sheets
 Kullanılacak Sheet ID:
