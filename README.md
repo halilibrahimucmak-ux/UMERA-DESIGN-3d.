@@ -3,12 +3,52 @@
 ## 3D abajur tasarım ve sipariş akışı
 
 - Üst menüdeki **Abajur Tasarla** bağlantısı canlı Three.js yapılandırıcısını açar.
-- Müşteri profil, ölçü, desen, malzeme, renk, E14/E27 duy ve paket seçimini gerçek zamanlı önizler. Duy bağlantısı kullanıcı tarafından değiştirilemez: E27, Ø41,4 mm geçme ve dört kıvrımlı taşıyıcıyla; E14, Ø28,4 mm geçme ve üç kıvrımlı taşıyıcıyla sabit üretilir.
+- Müşteri hazır bir tasarımla başlar (Nordik, Fener, Origami, Sarmal, Kum Saati, Dalga), boyut/renk/malzeme seçer ve isterse **Detaylı ayarlar** ile profil, desen, nervür ve duvar kalınlığına iner.
+- Duy bağlantısı kullanıcı tarafından değiştirilemez: E27 Ø41,4 mm geçme ve dört kıvrımlı taşıyıcıyla; E14 Ø28,4 mm geçme ve üç kıvrımlı taşıyıcıyla sabit üretilir.
 - Sepete ekleme sırasında `/api/abajur-price` seçimi sunucuda yeniden doğrular ve fiyatı aynı geometri üzerinden hesaplar.
-- Abajur, standart ürünlerle aynı sepette ve aynı sipariş formunda satın alınabilir.
 - Siparişin tam üretim yapılandırması Google Sheets `Orders` sayfasındaki `yapilandirma_json` sütununda saklanır.
-- Yönetici panelinde her abajur için **STL İndir** düğmesi görünür. Baskıya hazır STL, müşterinin değiştiremeyeceği şekilde siparişte kayıtlı üretim yapılandırmasından sunucuda oluşturulur ve doğrudan indirilir; ara JSON dosyası gerekmez.
-- Müşteri STL dosyasını indiremez; üretim modeli yalnızca kaydedilen sipariş yapılandırmasından oluşturulur.
+- Yönetici panelinde her abajur için **Baskıya Hazır STL** ve **İş emri** düğmeleri görünür. Müşteri STL dosyasına hiçbir noktada erişemez.
+
+### Geometri tek kaynaktan gelir
+
+`lib/abajur-geometri.mjs` şeklin tek tanımıdır. Hem tarayıcıdaki konfigüratör hem de sunucudaki STL üreticisi bu dosyayı içe aktarır; aralarındaki tek fark çözünürlüktür. Geometriyi değiştirirken artık iki dosyayı elle eşitlemek gerekmiyor.
+
+Şekli etkileyen bir değişiklik yaptığında `GEO_SURUM` sabitini artır. Sipariş farklı bir sürümle verilmişse iş emri bunu uyarı olarak gösterir.
+
+### Baskıya hazırlık
+
+STL üretimi Bambu X2D için hazırlanmıştır ve şunları garanti eder:
+
+- **Kapalı (su geçirmez) ağ.** Gövde ve her montaj parçası kenar bazında doğrulanır; sonuç iş emrinde raporlanır. Dilimleyicide onarım gerekmez.
+- **Gerçek yüzey normalleri.** Facet normalleri üçgen düzleminden hesaplanır, köşe normali ortalamasından değil. Sıfır alanlı üçgenler dosyaya yazılmaz.
+- **Hazır yerleşim.** Model ters çevrilir (boyun ve taşıyıcılar tablaya yatar, havada köprü kalmaz), Z=0'a oturtulur ve XY'de ortalanır. Dilimleyicide taşımaya gerek yoktur.
+- **Hat genişliğine oturan duvar.** Duvar kalınlığı 0,42 mm'nin tam katına yuvarlanır (2–6 duvar). Böylece dilimleyici boşluk dolgusu üretmez ve basılan et istenen ölçüyü tutar.
+- **Hata payına göre çözünürlük.** Üçgen sayısı sabit değil; yüzeyin ideal eğriden sapması üretimde 0,045 mm'nin altında tutulur — 0,4 mm nozulun çok altında.
+
+İş emri, Bambu Studio için kat yüksekliği, duvar sayısı, dolgu, brim ve destek önerilerini; ayrıca ilk kat temas alanını ve tahmini ağırlığı verir.
+
+Yazıcı değişirse `lib/abajur-geometri.mjs` içindeki `TABLA` sabitini güncelle; tüm ölçü sınırları ve uyarılar oradan türer.
+
+### Vercel 4,5 MB sınırı
+
+Vercel serverless fonksiyonlarında istek ve yanıt gövdesi 4,5 MB ile sınırlıdır. İki yönde de çözüldü:
+
+**İndirme (STL).** Eskiden karmaşık tasarımlar 20 MB'a kadar STL üretiyordu ve indirme sessizce başarısız oluyordu. Şimdi:
+- çözünürlük hata payından türetilir ve 150.000 üçgenlik bütçeye sığdırılır,
+- yanıt gzip ile gönderilir (tarayıcı şeffaf biçimde açar, diske tam STL iner),
+- yine de sınıra yaklaşılırsa dosya bir kez daha düşük bütçeyle üretilir.
+
+Ölçülen en kötü durum: 6,9 MB STL → **2,5 MB** ağ üzerinde.
+
+**Yükleme (görseller).** Fotoğraflar `src/lib/gorsel.js` ile gönderilmeden önce tarayıcıda uzun kenarı 2000 px'e indirilip WebP'ye çevrilir; EXIF dönüşü uygulanır. 12 MP telefon fotoğrafı tipik olarak 200–500 KB'a iner, yani gövde sınıra hiç yaklaşmaz. Müşteri artık dosya boyutuyla uğraşmaz. Sunucudaki 3 MB kontrolü ikinci savunma hattı olarak durur.
+
+### Testler
+
+```bash
+npm test
+```
+
+Geometri testleri kapalı ağ, analitik hacim doğrulaması, kiriş hatası, duvar yuvarlaması, STL ikili biçimi, tabla yerleşimi ve sıkıştırılmış dosya boyutunu kontrol eder.
 
 ### Orders sütunları
 
@@ -117,12 +157,12 @@ Resend ile e-posta göndermek için Vercel ortam değişkenlerine `RESEND_API_KE
 
 WhatsApp Business Cloud API ile otomatik mesaj göndermek için `WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_STATUS_TEMPLATE_NAME`, `WHATSAPP_STATUS_TEMPLATE_LANGUAGE` ve isteğe bağlı `WHATSAPP_GRAPH_VERSION` değerlerini ekleyin. Onaylı şablonun gövdesindeki değişkenler sırasıyla müşteri adı (`{{1}}`), sipariş numarası (`{{2}}`) ve durum (`{{3}}`) olmalıdır. Örnek: `Merhaba {{1}}, {{2}} numaralı siparişinizin durumu {{3}} olarak güncellendi.`
 
-Siparişler `Orders` sayfasında şu sütunlarla tutulur: `siparis_no | tarih | musteri | telefon | email | adres | not | urunler | toplam | durum`.
+Siparişler `Orders` sayfasında şu sütunlarla tutulur: `siparis_no | tarih | musteri | telefon | email | adres | not | urunler | toplam | durum | yapilandirma_json`.
 
 
 ## Özel Tasarım Talepleri
 
-Özel Tasarım formu müşterinin JPG/PNG/WEBP görsellerini (en fazla 5 adet, her biri 3 MB) Vercel Blob'a yükler ve talebi Google Sheets'teki `CustomOrders` sayfasına kaydeder.
+Özel Tasarım formu müşterinin JPG/PNG/WEBP görsellerini (en fazla 5 adet) Vercel Blob'a yükler. Görseller gönderilmeden önce tarayıcıda küçültülür, bu yüzden müşteri için dosya boyutu sınırı yoktur ve talebi Google Sheets'teki `CustomOrders` sayfasına kaydeder.
 
 `CustomOrders` sütunları:
 `talep_no | tarih | musteri | telefon | email | aciklama | olcu | renk | adet | gorseller | durum | teklif | not`
@@ -146,7 +186,7 @@ Gerekli Vercel Blob değişkenleri:
 - Admin butonu yalnızca doğrulanmış admin oturumunda görünür; ziyaretçilerde görünmez.
 - Sipariş kaydı başarısız olursa WhatsApp/e-posta açılmaz ve sepet silinmez.
 - Google Sheets formül enjeksiyonuna karşı müşteri metinleri güvenli hücre metnine çevrilir.
-- Görsel dosya türleri JPG/PNG/WEBP ve dosya başına 3 MB ile sınırlandırılmıştır.
+- Görsel dosya türleri JPG/PNG/WEBP ile sınırlıdır; büyük fotoğraflar yüklenmeden önce tarayıcıda küçültülür.
 
 ## Canlıya geçmeden önce
 
@@ -154,3 +194,19 @@ Gerekli Vercel Blob değişkenleri:
 - İade, iptal, kişiye özel ürün, KVKK/gizlilik ve mesafeli satış metinlerini hukuk/mali müşavir kontrolüyle ekle.
 - Gerçek müşteri yorumu oluşmadan sahte yorum yayınlama.
 - WhatsApp numarası ve şirket e-posta adresinin Vercel Production ortamında tanımlı olduğunu doğrula.
+
+## Bu sürümde yapılan teknik iyileştirmeler
+
+- Geometri tek modüle (`lib/abajur-geometri.mjs`) taşındı; konfigüratör ile üretici arasındaki kopya kod ve sessizce ayrışma riski ortadan kalktı.
+- STL çözünürlüğü sabit sayılar yerine ölçülen kiriş hatasından türetiliyor. Tipik tasarımlarda dosya 2,5 MB'tan 0,4–0,9 MB'a indi, en karmaşık tasarımda 20 MB'tan 6,9 MB'a.
+- STL facet normalleri gerçek üçgen düzleminden hesaplanıyor; dejenere üçgenler eleniyor.
+- Ağ kapalılığı (watertight) her üretimde doğrulanıp iş emrinde raporlanıyor.
+- Duvar kalınlığı ekstrüzyon hattının tam katına oturuyor.
+- Hacim ve ağırlık hesabı analitik integralle doğrulandı. Not: önceki sürüm ağırlığı olduğundan düşük bildiriyordu; fiyatlar buna bağlı olarak bir miktar yükselir.
+- Fiyat hesabı artık tam STL üretmiyor; `/api/abajur-price` yanıtı milisaniyeler içinde dönüyor.
+- Konfigüratör hazır tasarım şablonları, boyut ön ayarları ve basit/detaylı mod ile yeniden kurgulandı.
+- Sahne gerçek bir sarkıt olarak kuruluyor: kablo, tavan rozeti, zemin, temas gölgesi, bloom ve AgX ton eşleme. Duvardan geçen ışık Beer-Lambert sönümlemesiyle hesaplandığı için nervür tepeleri parlıyor, yan yüzler kararıyor.
+- `alert()` yerine biriken bildirimler; sepet `localStorage`'da kalıcı.
+- Konfigüratör ayrı pakete alındı: ana paket 767 KB'tan 241 KB'a (gzip 76 KB) indi.
+- Katalogda yükleme iskeletleri, ağ hatalarında anlaşılır mesajlar.
+- Yönetici panelinde her tasarım için Bambu Studio ayarlarını gösteren **İş emri** ekranı.

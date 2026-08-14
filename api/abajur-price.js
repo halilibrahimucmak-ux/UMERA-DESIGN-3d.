@@ -15,7 +15,10 @@ export default async function handler(req, res) {
       birim: quote.birim,
       toplam: quote.toplam,
       gram: quote.gram,
+      hacimCm3: quote.hacimCm3,
       sureSaat: quote.sureSaat,
+      duvarSayisi: quote.duvarSayisi,
+      enBuyukCap: quote.enBuyukCap,
       summary: quote.summary,
       name: quote.name
     });

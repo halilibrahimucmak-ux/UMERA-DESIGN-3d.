@@ -38,8 +38,7 @@ export default async function handler(req, res) {
             price: quote.birim,
             config: quote.config,
             summary: quote.summary,
-            geoSurum: quote.geoSurum,
-            isEmri: quote.isEmri
+            geoSurum: quote.geoSurum
           };
         }
         const product = currentProducts.find(candidate => candidate.id === item.id);

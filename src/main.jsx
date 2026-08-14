@@ -1,10 +1,15 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useCallback, lazy, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
 import './styles.css';
 import MaintenancePage from './MaintenancePage.jsx';
-import AbajurKonfigurator from './components/AbajurKonfigurator.jsx';
+import { sikistir, boyutYazisi } from './lib/gorsel.js';
+
+// Konfigüratör three.js ile birlikte ~600 KB. Katalogla gelen ziyaretçiyi
+// bekletmemek için yalnızca tasarım stüdyosu açıldığında indiriliyor.
+const AbajurKonfigurator = lazy(() => import('./components/AbajurKonfigurator.jsx'));
 
 const SITE_OPEN = import.meta.env.VITE_SITE_OPEN !== 'false';
+const SEPET_ANAHTAR = 'umera.sepet.v2';
 
 const WA = import.meta.env.VITE_WHATSAPP_NUMBER || '';
 const EMAIL = import.meta.env.VITE_COMPANY_EMAIL || 'siparis@umeradesign3d.com';
@@ -58,24 +63,79 @@ function configId(config) {
 }
 
 const api = async (url, options = {}) => {
-  const response = await fetch(url, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(options.headers || {})
-    }
-  });
+  let response;
+  try {
+    response = await fetch(url, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(options.headers || {})
+      }
+    });
+  } catch {
+    throw new Error('Sunucuya ulaşılamadı. İnternet bağlantını kontrol et.');
+  }
   const data = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(data.error || 'İşlem başarısız.');
   return data;
 };
+
+/* ------------------------------ BİLDİRİM ------------------------------
+   alert() akışı kesiyor, üst üste geldiğinde kullanılamaz hale geliyor ve
+   mobilde sayfayı dondurabiliyor. Yerine sağ üstte biriken, kendiliğinden
+   kaybolan bildirimler. Modül düzeyinde abone tutuluyor ki alt bileşenler
+   prop zinciri olmadan bildirim gönderebilsin. */
+let toastAbone = null;
+
+function bildir(mesaj, tip = 'bilgi') {
+  if (toastAbone) toastAbone(String(mesaj), tip);
+  else if (tip === 'hata') console.error(mesaj);
+}
+
+function ToastKapsayici() {
+  const [liste, setListe] = useState([]);
+
+  useEffect(() => {
+    toastAbone = (mesaj, tip) => {
+      const id = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+      setListe(mevcut => [...mevcut.slice(-3), { id, mesaj, tip }]);
+      setTimeout(
+        () => setListe(mevcut => mevcut.filter(t => t.id !== id)),
+        tip === 'hata' ? 7000 : 4000
+      );
+    };
+    return () => { toastAbone = null; };
+  }, []);
+
+  if (!liste.length) return null;
+  return (
+    <div className="toastKapsayici" role="status" aria-live="polite">
+      {liste.map(t => (
+        <div key={t.id} className={`toast ${t.tip}`}>
+          <span>{t.tip === 'hata' ? '⚠' : t.tip === 'basari' ? '✓' : 'i'}</span>
+          <p>{t.mesaj}</p>
+          <button type="button" onClick={() => setListe(m => m.filter(x => x.id !== t.id))} aria-label="Kapat">×</button>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 function App() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
   const [cat, setCat] = useState('Tümü');
-  const [cart, setCart] = useState([]);
+  // Sepet sekme yenilense de kaybolmasın — ziyaretçi tasarımını tekrar
+  // kurmak zorunda kalmıyor.
+  const [cart, setCart] = useState(() => {
+    try {
+      const kayit = JSON.parse(localStorage.getItem(SEPET_ANAHTAR) || '[]');
+      return Array.isArray(kayit) ? kayit.filter(i => i?.product?.id && i.quantity > 0) : [];
+    } catch {
+      return [];
+    }
+  });
   const [cartOpen, setCartOpen] = useState(false);
   const [checkout, setCheckout] = useState(false);
   const [submittingOrder, setSubmittingOrder] = useState(false);
@@ -94,6 +154,7 @@ function App() {
   const [imageUploading, setImageUploading] = useState(false);
   const [customUploading, setCustomUploading] = useState(false);
   const [customFiles, setCustomFiles] = useState([]);
+  const [uploadDurum, setUploadDurum] = useState('');
   const [form, setForm] = useState({
     name: '',
     category: 'Figür & Oyuncak',
@@ -125,7 +186,15 @@ function App() {
   }, []);
 
   useEffect(() => {
-    api('/api/auth-me').then(() => setAdmin(true)).catch(() => {});
+    try {
+      localStorage.setItem(SEPET_ANAHTAR, JSON.stringify(cart));
+    } catch { /* özel sekme veya dolu depolama — sepet yalnızca bellekte kalır */ }
+  }, [cart]);
+
+  useEffect(() => {
+    api('/api/auth-me')
+      .then(data => setAdmin(Boolean(data?.authenticated)))
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -193,6 +262,11 @@ function App() {
       method: 'POST',
       body: JSON.stringify({ config: payload.config })
     });
+    // Fiyat sunucuda yeniden hesaplanır; beklenen alanlar yoksa sepete
+    // yanlış fiyatla ürün eklemektense hata veriyoruz.
+    if (!quote?.config || !Number.isFinite(Number(quote.birim))) {
+      throw new Error('Fiyat doğrulanamadı. Lütfen birazdan tekrar dene.');
+    }
     const quantity = Math.max(1, Math.min(20, Number(quote.config.adet) || 1));
     const product = {
       id: `abajur-${configId(quote.config)}`,
@@ -267,6 +341,7 @@ function App() {
       setReceipt({ text: lines, orderNo });
       setCheckout(false);
       setCart([]);
+      bildir(`Siparişin alındı. Sipariş no: ${orderNo}`, 'basari');
 
       if (channel === 'email') {
         window.open(`mailto:${EMAIL}?subject=${encodeURIComponent(`UMERA Design 3D - ${orderNo}`)}&body=${encodeURIComponent(lines)}`, '_blank');
@@ -276,7 +351,7 @@ function App() {
         window.open(`mailto:${EMAIL}?subject=${encodeURIComponent(`UMERA Design 3D - ${orderNo}`)}&body=${encodeURIComponent(lines)}`, '_blank');
       }
     } catch (error) {
-      alert(`Sipariş kaydedilemedi: ${error.message}\nLütfen tekrar deneyin.`);
+      bildir(`Sipariş kaydedilemedi: ${error.message} Sepetin duruyor, tekrar deneyebilirsin.`, 'hata');
     } finally {
       setSubmittingOrder(false);
     }
@@ -289,7 +364,7 @@ function App() {
     const email = String(formData.get('email') || '').trim();
 
     if (!phone && !email) {
-      alert('Telefon veya e-posta bilgilerinden en az birini girin.');
+      bildir('Telefon veya e-posta bilgilerinden en az birini gir.', 'hata');
       return;
     }
     if (!customFiles.length && !confirm('Fotoğraf eklemeden göndermek istiyor musunuz?')) return;
@@ -297,19 +372,19 @@ function App() {
     setCustomUploading(true);
     try {
       const images = [];
-      for (const file of customFiles) {
-        const dataUrl = await new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result);
-          reader.onerror = reject;
-          reader.readAsDataURL(file);
-        });
+      for (const [sira, file] of customFiles.entries()) {
+        setUploadDurum(`Fotoğraf ${sira + 1}/${customFiles.length} hazırlanıyor…`);
+        // Sıkıştırma tarayıcıda yapılıyor: telefon fotoğrafları 5-12 MB
+        // olabiliyor ve Vercel'in 4.5 MB istek sınırını aşıyordu.
+        const hazir = await sikistir(file);
+        setUploadDurum(`Fotoğraf ${sira + 1}/${customFiles.length} yükleniyor…`);
         const uploaded = await api('/api/custom-upload', {
           method: 'POST',
-          body: JSON.stringify({ name: file.name, type: file.type, data: dataUrl })
+          body: JSON.stringify({ name: hazir.name, type: hazir.type, data: hazir.dataUrl })
         });
         images.push(uploaded.url);
       }
+      setUploadDurum('');
 
       const data = {
         name: String(formData.get('name') || '').trim(),
@@ -342,22 +417,23 @@ function App() {
 
       setCustom(false);
       setCustomFiles([]);
-      alert(`Talebiniz alındı. Talep No: ${response.requestNo}`);
+      bildir(`Talebin alındı. Talep no: ${response.requestNo}`, 'basari');
       if (WA) window.open(`https://wa.me/${WA}?text=${encodeURIComponent(text)}`, '_blank');
     } catch (error) {
-      alert(error.message);
+      bildir(error.message, 'hata');
     } finally {
+      setUploadDurum('');
       setCustomUploading(false);
     }
   }
 
   function handleCustomFiles(event) {
     const files = Array.from(event.target.files || []);
-    if (files.length > 5) return alert('En fazla 5 fotoğraf yükleyebilirsiniz.');
-    const tooBig = files.find(file => file.size > 3 * 1024 * 1024);
-    if (tooBig) return alert(`${tooBig.name} 3 MB sınırını aşıyor.`);
+    if (files.length > 5) return bildir('En fazla 5 fotoğraf yükleyebilirsin.', 'hata');
     const bad = files.find(file => !['image/jpeg', 'image/png', 'image/webp'].includes(file.type));
-    if (bad) return alert('Sadece JPG, PNG veya WEBP yükleyebilirsiniz.');
+    if (bad) return bildir('Sadece JPG, PNG veya WEBP yükleyebilirsin.', 'hata');
+    // Boyut sınırı yok: büyük fotoğraflar gönderilmeden önce tarayıcıda
+    // küçültülüyor. Kullanıcı telefonundaki fotoğrafı olduğu gibi seçebilir.
     setCustomFiles(files);
   }
 
@@ -425,22 +501,22 @@ function App() {
       });
       setOrders(items => items.map(item => item.orderNo === order.orderNo ? { ...item, status } : item));
       const notification = response.notification;
-      if (notification?.reason === 'status-not-notifiable') return alert('Durum güncellendi. “Yeni” durumu için müşteri bildirimi gönderilmez.');
+      if (notification?.reason === 'status-not-notifiable') return bildir('Durum güncellendi. “Yeni” durumu için müşteri bildirimi gönderilmez.');
       const delivered = notification?.channels?.filter(item => item.sent).map(item => item.channel === 'whatsapp' ? 'WhatsApp' : 'e-posta') || [];
-      if (delivered.length) return alert(`Durum güncellendi. Müşteriye ${delivered.join(' ve ')} bildirimi gönderildi.`);
+      if (delivered.length) return bildir(`Durum güncellendi. Müşteriye ${delivered.join(' ve ')} bildirimi gönderildi.`, 'basari');
       if (notification?.fallbackUrl) {
         window.open(notification.fallbackUrl, '_blank', 'noopener,noreferrer');
-        return alert('Durum güncellendi. Otomatik bildirim servisi bağlı olmadığı için müşterinin hazır WhatsApp mesajı açıldı; yalnızca Gönder’e basın.');
+        return bildir('Durum güncellendi. Otomatik bildirim servisi bağlı değil; müşterinin hazır WhatsApp mesajı açıldı, yalnızca Gönder’e bas.');
       }
-      alert('Durum güncellendi; ancak müşterinin kullanılabilir iletişim bilgisi olmadığı için bildirim gönderilemedi.');
+      bildir('Durum güncellendi; müşterinin iletişim bilgisi olmadığı için bildirim gönderilemedi.', 'hata');
     } catch (error) {
-      alert(error.message);
+      bildir(error.message, 'hata');
     }
   }
 
   function notifyOrder(order) {
     const phone = waPhone(order.phone);
-    if (!phone) return alert('Müşterinin telefon numarası bulunamadı.');
+    if (!phone) return bildir('Müşterinin telefon numarası bulunamadı.', 'hata');
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(statusMessage(order, order.status))}`, '_blank', 'noopener,noreferrer');
   }
 
@@ -471,9 +547,9 @@ function App() {
       });
       await loadProducts();
       newProduct();
-      alert('Ürün kaydedildi.');
+      bildir('Ürün kaydedildi.', 'basari');
     } catch (error) {
-      alert(error.message);
+      bildir(error.message, 'hata');
     }
   }
 
@@ -483,36 +559,42 @@ function App() {
       await api('/api/products', { method: 'DELETE', body: JSON.stringify({ id }) });
       await loadProducts();
     } catch (error) {
-      alert(error.message);
+      bildir(error.message, 'hata');
     }
   }
 
   async function uploadImage(event) {
     const file = event.target.files?.[0];
     if (!file) return;
-    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) return alert('JPG, PNG veya WEBP görsel seçin.');
-    if (file.size > 3 * 1024 * 1024) return alert('Görsel 3 MB altında olmalı.');
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      return bildir('JPG, PNG veya WEBP görsel seç.', 'hata');
+    }
 
     setImageUploading(true);
-    const reader = new FileReader();
-    reader.onload = async () => {
-      try {
-        const response = await api('/api/upload', {
-          method: 'POST',
-          body: JSON.stringify({ name: file.name, type: file.type, data: reader.result })
-        });
-        setForm(current => ({ ...current, image: response.url }));
-      } catch (error) {
-        alert(error.message);
-      } finally {
-        setImageUploading(false);
-      }
-    };
-    reader.readAsDataURL(file);
+    try {
+      const hazir = await sikistir(file, { maksKenar: 1600, hedefBayt: 600_000 });
+      const response = await api('/api/upload', {
+        method: 'POST',
+        body: JSON.stringify({ name: hazir.name, type: hazir.type, data: hazir.dataUrl })
+      });
+      setForm(current => ({ ...current, image: response.url }));
+      bildir(
+        hazir.sonrakiBayt < hazir.oncekiBayt
+          ? `Görsel yüklendi (${boyutYazisi(hazir.oncekiBayt)} → ${boyutYazisi(hazir.sonrakiBayt)}).`
+          : 'Görsel yüklendi.',
+        'basari'
+      );
+    } catch (error) {
+      bildir(error.message, 'hata');
+    } finally {
+      setImageUploading(false);
+      event.target.value = '';
+    }
   }
 
   return (
     <div className="app">
+      <ToastKapsayici />
       <div className="glow glow1" />
       <div className="glow glow2" />
 
@@ -539,14 +621,17 @@ function App() {
             <button className="ghost" onClick={() => setDesignerOpen(false)}>← Kataloğa Dön</button>
           </div>
           <div className="abajurStudio">
-            <AbajurKonfigurator
-              onAddToCart={addAbajur}
-              baseUrl={typeof window !== 'undefined' ? `${window.location.origin}${window.location.pathname}` : ''}
-              fiyatUrl="/api/abajur-price"
-              stlIndirme="kapali"
-              filigran="UMERA DESIGN 3D"
-              yoneticiPaneli={false}
-            />
+            <Suspense fallback={<div className="studioYukleniyor"><span /><b>3D tasarım stüdyosu yükleniyor…</b><small>İlk açılışta birkaç saniye sürebilir.</small></div>}>
+              <AbajurKonfigurator
+                onAddToCart={addAbajur}
+                baseUrl={typeof window !== 'undefined' ? `${window.location.origin}${window.location.pathname}` : ''}
+                fiyatUrl="/api/abajur-price"
+                stlIndirme="kapali"
+                filigran="UMERA DESIGN 3D"
+                yoneticiPaneli={admin}
+                onBildirim={mesaj => bildir(mesaj, 'basari')}
+              />
+            </Suspense>
           </div>
         </main>
       ) : !adminOpen ? (
@@ -579,7 +664,7 @@ function App() {
 
           <section id="featured" className="wrap featuredSection">
             <SectionTitle eyebrow="ÇOK TERCİH EDİLENLER" title={<>İlk bakışta <em>öne çıkanlar.</em></>} text="Popüler tasarımları incele, sepete ekle ve siparişini dakikalar içinde oluştur." />
-            {loading ? <div className="empty">Ürünler yükleniyor...</div> : (
+            {loading ? <SkeletonGrid adet={3} sinif="featuredGrid" /> : (
               <div className="featuredGrid">
                 {(featured.length ? featured : DEMO).map(product => (
                   <ProductCard key={`featured-${product.id}`} product={product} onAdd={add} onDetail={setProductDetail} onImage={setSelectedImage} featured />
@@ -597,7 +682,7 @@ function App() {
               <div className="search"><span>⌕</span><input value={query} onChange={event => setQuery(event.target.value)} placeholder="Ürün ara..." aria-label="Ürün ara" /></div>
               <div className="chips">{CATS.map(category => <button key={category} className={cat === category ? 'chip active' : 'chip'} onClick={() => setCat(category)}>{category}</button>)}</div>
             </div>
-            {loading ? <div className="empty">Ürünler yükleniyor...</div> : filtered.length ? (
+            {loading ? <SkeletonGrid adet={6} sinif="grid" /> : filtered.length ? (
               <div className="grid">
                 {filtered.map(product => <ProductCard key={product.id} product={product} onAdd={add} onDetail={setProductDetail} onImage={setSelectedImage} />)}
               </div>
@@ -708,11 +793,11 @@ function App() {
             <label>Ne tasarlayalım? *<textarea name="details" required rows="5" placeholder="Ürün, kullanım amacı, referans ve istediğiniz özellikler..." /></label>
             <div className="two"><Field name="dimensions" label="Ölçü / Boyut" placeholder="Örn. 180 × 80 × 60 mm" /><Field name="color" label="Renk / Malzeme" placeholder="Örn. Mat siyah PLA" /></div>
             <Field name="quantity" label="Adet" type="number" min="1" defaultValue="1" />
-            <label>Fotoğraflar <span className="muted">(JPG, PNG, WEBP • en fazla 5 adet / 3 MB)</span><input type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={handleCustomFiles} /></label>
+            <label>Fotoğraflar <span className="muted">(JPG, PNG, WEBP • en fazla 5 adet — büyük fotoğraflar otomatik küçültülür)</span><input type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={handleCustomFiles} /></label>
             {customFiles.length > 0 && <div className="customFileList">{customFiles.map(file => <div className="customFile" key={file.name}><span>🖼️ {file.name}</span><button type="button" onClick={() => removeCustomFile(file.name)}>×</button></div>)}</div>}
             <label>Ek Not<textarea name="note" rows="2" placeholder="Teslim tarihi, özel istek veya başka notunuz..." /></label>
             <label className="consent"><input type="checkbox" required /> <span>İletişim ve tasarım bilgilerimin talebimin değerlendirilmesi amacıyla kaydedilmesini kabul ediyorum.</span></label>
-            {customUploading && <div className="notice">Fotoğraflar yükleniyor ve tasarım talebiniz oluşturuluyor...</div>}
+            {customUploading && <div className="notice">{uploadDurum || 'Tasarım talebin oluşturuluyor…'}</div>}
             <button className="primary full" disabled={customUploading}>{customUploading ? 'Gönderiliyor...' : 'Özel Tasarım Talebini Gönder →'}</button>
           </form>
         </Modal>
@@ -735,6 +820,23 @@ function App() {
           </form>
         </Modal>
       )}
+    </div>
+  );
+}
+
+function SkeletonGrid({ adet = 6, sinif = 'grid' }) {
+  return (
+    <div className={sinif} aria-hidden="true">
+      {Array.from({ length: adet }, (_, i) => (
+        <article className="card iskelet" key={i}>
+          <div className="pic" />
+          <div className="cardBody">
+            <span className="iskeletSatir gen" />
+            <span className="iskeletSatir" />
+            <span className="iskeletSatir kisa" />
+          </div>
+        </article>
+      ))}
     </div>
   );
 }
@@ -809,6 +911,7 @@ function AdminPanel({ stats, orders, customOrders, products, form, setForm, edit
   const [customFilter, setCustomFilter] = useState('Tümü');
   const [selectedCustom, setSelectedCustom] = useState(null);
   const [stlLoading, setStlLoading] = useState('');
+  const [isEmri, setIsEmri] = useState(null);
 
   async function updateCustom(order, status, quote = order.quote) {
     try {
@@ -819,15 +922,15 @@ function AdminPanel({ stats, orders, customOrders, products, form, setForm, edit
       const updated = { ...order, status: response.order.status, quote: response.order.quote };
       setSelectedCustom(current => current?.requestNo === order.requestNo ? updated : current);
       await loadDashboard();
-      alert('Özel tasarım talebi güncellendi.');
+      bildir('Özel tasarım talebi güncellendi.', 'basari');
     } catch (error) {
-      alert(error.message);
+      bildir(error.message, 'hata');
     }
   }
 
   function customWhatsApp(order) {
     const digits = String(order.phone || '').replace(/\D/g, '');
-    if (!digits) return alert('Müşterinin telefon numarası bulunamadı.');
+    if (!digits) return bildir('Müşterinin telefon numarası bulunamadı.', 'hata');
     const phone = digits.startsWith('90') ? digits : digits.startsWith('0') ? `90${digits.slice(1)}` : digits;
     const text = `Merhaba ${order.name},\n\nUMERA Design 3D özel tasarım talebiniz (${order.requestNo}) incelenmiştir.\nDurum: ${order.status}${order.quote ? `\nTeklif: ${money(order.quote)}` : ''}\n\nUMERA Design 3D`;
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
@@ -860,8 +963,33 @@ function AdminPanel({ stats, orders, customOrders, products, form, setForm, edit
       link.click();
       link.remove();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+      const ucgen = response.headers.get('X-Stl-Triangles');
+      const kapali = response.headers.get('X-Stl-Watertight') === '1';
+      bildir(
+        `${fileName} indirildi · ${(blob.size / 1048576).toFixed(1)} MB · ${Number(ucgen || 0).toLocaleString('tr-TR')} üçgen` +
+          (kapali ? ' · ağ kapalı' : ' · DİKKAT: ağ kapalı değil'),
+        kapali ? 'basari' : 'hata'
+      );
     } catch (error) {
-      alert(error.message);
+      bildir(error.message, 'hata');
+    } finally {
+      setStlLoading('');
+    }
+  }
+
+  /** Dosyayı indirmeden Bambu Studio ayarlarını ve kontrol sonuçlarını göster. */
+  async function showIsEmri(order, index) {
+    if (stlLoading) return;
+    setStlLoading(`rapor-${order.orderNo}-${index}`);
+    try {
+      const data = await api('/api/order-stl', {
+        method: 'POST',
+        body: JSON.stringify({ orderNo: order.orderNo, configurationIndex: index, rapor: true })
+      });
+      setIsEmri({ orderNo: order.orderNo, index, ...data });
+    } catch (error) {
+      bildir(error.message, 'hata');
     } finally {
       setStlLoading('');
     }
@@ -886,9 +1014,64 @@ function AdminPanel({ stats, orders, customOrders, products, form, setForm, edit
         <section className="panel editor"><div className="panelHead"><div><b>{edit ? 'Ürünü Düzenle' : 'Yeni Ürün'}</b><span>Bilgileri girip kaydet</span></div></div><form className="form" onSubmit={saveProduct}><Field label="Ürün adı *" value={form.name} onChange={event => setForm({ ...form, name: event.target.value })} required /><label>Kategori<select value={form.category} onChange={event => setForm({ ...form, category: event.target.value })}>{CATS.filter(item => item !== 'Tümü').map(category => <option key={category}>{category}</option>)}</select></label><div className="two"><Field label="Fiyat (TL) *" type="number" min="0" value={form.price} onChange={event => setForm({ ...form, price: event.target.value })} required /><Field label="Stok *" type="number" min="0" value={form.stock} onChange={event => setForm({ ...form, stock: event.target.value })} required /></div><label>Ürün Görseli<input type="file" accept="image/jpeg,image/png,image/webp" onChange={uploadImage} /></label>{imageUploading && <div className="notice">Görsel yükleniyor...</div>}{form.image && <img className="preview" src={form.image} alt="Önizleme" />}<Field label="Görsel URL (opsiyonel)" value={form.image} onChange={event => setForm({ ...form, image: event.target.value })} /><label>Açıklama<textarea rows="4" value={form.description} onChange={event => setForm({ ...form, description: event.target.value })} /></label><div className="two"><button className="primary">{edit ? 'Değişiklikleri Kaydet' : 'Ürünü Yayınla'}</button><button type="button" className="ghost" onClick={newProduct}>Temizle</button></div></form></section>
       </div>
 
-      <section className="panel orders"><div className="panelHead"><div><b>Sipariş Yönetimi</b><span>Durumu değiştirdiğinizde müşteriye otomatik bildirim gönderilir · sipariş tasarımları baskıya hazır STL olarak indirilir</span></div></div><div className="tableWrap"><table><thead><tr><th>Sipariş</th><th>Müşteri</th><th>Ürünler</th><th>Tutar</th><th>Durum</th><th>İşlem</th></tr></thead><tbody>{orders.length ? orders.map(order => <tr key={order.orderNo}><td><b>{order.orderNo}</b><small>{new Date(order.date).toLocaleString('tr-TR')}</small></td><td><b>{order.name}</b><small>{order.phone}</small>{order.email && <small>{order.email}</small>}<small>{order.address}</small></td><td>{order.items}{order.configurations?.length > 0 && <small className="productionBadge">◈ {order.configurations.length} STL üretime hazır</small>}</td><td><b>{money(order.total)}</b></td><td><select className="statusSelect" value={order.status} onChange={event => updateOrder(order, event.target.value)}>{ORDER_STATUSES.map(status => <option key={status}>{status}</option>)}</select><small>Değişiklikte bildirim gider</small></td><td><div className="orderActions">{order.configurations?.map((configuration, index) => { const key = `${order.orderNo}-${index}`; return <button key={key} className="productionBtn" disabled={Boolean(stlLoading)} onClick={() => downloadAbajurProduction(order, configuration, index)}>{stlLoading === key ? 'STL hazırlanıyor…' : `⬇ Abajur ${index + 1} STL İndir`}</button>; })}<button className="shipBtn" onClick={() => notifyOrder(order)}>Müşteriye WhatsApp aç</button></div></td></tr>) : <tr><td colSpan="6" className="empty">Henüz sipariş yok.</td></tr>}</tbody></table></div></section>
+      <section className="panel orders"><div className="panelHead"><div><b>Sipariş Yönetimi</b><span>Durumu değiştirdiğinizde müşteriye otomatik bildirim gönderilir · sipariş tasarımları baskıya hazır STL olarak indirilir</span></div></div><div className="tableWrap"><table><thead><tr><th>Sipariş</th><th>Müşteri</th><th>Ürünler</th><th>Tutar</th><th>Durum</th><th>İşlem</th></tr></thead><tbody>{orders.length ? orders.map(order => <tr key={order.orderNo}><td><b>{order.orderNo}</b><small>{new Date(order.date).toLocaleString('tr-TR')}</small></td><td><b>{order.name}</b><small>{order.phone}</small>{order.email && <small>{order.email}</small>}<small>{order.address}</small></td><td>{order.items}{order.configurations?.length > 0 && <small className="productionBadge">◈ {order.configurations.length} STL üretime hazır</small>}</td><td><b>{money(order.total)}</b></td><td><select className="statusSelect" value={order.status} onChange={event => updateOrder(order, event.target.value)}>{ORDER_STATUSES.map(status => <option key={status}>{status}</option>)}</select><small>Değişiklikte bildirim gider</small></td><td><div className="orderActions">{order.configurations?.map((configuration, index) => { const key = `${order.orderNo}-${index}`; return <div className="stlGrup" key={key}><button className="productionBtn" disabled={Boolean(stlLoading)} onClick={() => downloadAbajurProduction(order, configuration, index)}>{stlLoading === key ? 'STL hazırlanıyor…' : `⬇ Abajur ${index + 1} · Baskıya Hazır STL`}</button><button className="isEmriBtn" disabled={Boolean(stlLoading)} onClick={() => showIsEmri(order, index)}>{stlLoading === `rapor-${order.orderNo}-${index}` ? 'Hazırlanıyor…' : '⚙ İş emri'}</button></div>; })}<button className="shipBtn" onClick={() => notifyOrder(order)}>Müşteriye WhatsApp aç</button></div></td></tr>) : <tr><td colSpan="6" className="empty">Henüz sipariş yok.</td></tr>}</tbody></table></div></section>
 
       <section className="panel customOrdersAdmin"><div className="panelHead"><div><b>Özel Tasarım Talepleri</b><span>Google Sheets → CustomOrders · müşterilerin gönderdiği fotoğraflar ve talepler</span></div><div className="customFilters">{['Tümü', ...CUSTOM_STATUSES].map(status => <button key={status} className={customFilter === status ? 'chip active' : 'chip'} onClick={() => setCustomFilter(status)}>{status}</button>)}</div></div><div className="customCards">{filteredCustom.length ? filteredCustom.map(order => <article className="customOrderCard" key={order.requestNo} onClick={() => setSelectedCustom(order)}><div className="customOrderTop"><div><b>{order.requestNo}</b><small>{new Date(order.date).toLocaleString('tr-TR')}</small></div><span className="status">{order.status}</span></div><div className="customOrderBody"><div><b>{order.name}</b><small>{order.phone || order.email || 'İletişim yok'}</small><p>{order.details}</p><small>Ölçü: {order.dimensions || '-'} · Renk: {order.color || '-'} · Adet: {order.quantity}</small></div><div className="customThumbs">{order.images?.slice(0, 3).map((url, index) => <img key={url} src={url} alt={`Referans ${index + 1}`} />)}{order.images?.length > 3 && <span>+{order.images.length - 3}</span>}</div></div><div className="customOrderActions"><select className="statusSelect" value={order.status} onClick={event => event.stopPropagation()} onChange={event => { event.stopPropagation(); updateCustom(order, event.target.value); }}>{CUSTOM_STATUSES.map(status => <option key={status}>{status}</option>)}</select>{order.phone && <button className="ghost smallBtn" onClick={event => { event.stopPropagation(); customWhatsApp(order); }}>WhatsApp</button>}</div></article>) : <div className="empty">Bu filtrede özel tasarım talebi yok.</div>}</div></section>
+
+      {isEmri && (
+        <Modal title={`İş Emri · ${isEmri.orderNo} · Abajur ${isEmri.index + 1}`} close={() => setIsEmri(null)} wide>
+          <div className="isEmriIcerik">
+            <div className={isEmri.kapali ? 'isEmriDurum tamam' : 'isEmriDurum sorun'}>
+              {isEmri.kapali
+                ? '✓ Ağ kapalı (su geçirmez). Dilimleyicide onarım gerekmez.'
+                : '⚠ Ağ kapalı değil. Basmadan önce modeli kontrol et.'}
+            </div>
+
+            {isEmri.isEmri.uyarilar?.length > 0 && (
+              <div className="isEmriUyari">
+                {isEmri.isEmri.uyarilar.map((u, i) => <p key={i}>⚠ {u}</p>)}
+              </div>
+            )}
+
+            <div className="isEmriGrid">
+              {[
+                ['Dosya', isEmri.isEmri.dosya],
+                ['Dış ölçü', isEmri.isEmri.olcu],
+                ['Tablaya sığar', isEmri.isEmri.tablayaSigar ? 'Evet' : 'HAYIR — basma'],
+                ['Ağırlık', isEmri.isEmri.tahminiAgirlik],
+                ['Üçgen', Number(isEmri.ucgen).toLocaleString('tr-TR')],
+                ['Malzeme', `${isEmri.isEmri.malzeme} · ${isEmri.isEmri.renk}`],
+                ['Yönlendirme', isEmri.isEmri.yonlendirme],
+                ['Sarkma', isEmri.isEmri.sarkma],
+                ['İlk kat teması', isEmri.isEmri.ilkKatTemas],
+                ['Montaj', isEmri.isEmri.montaj],
+                ['Paket', isEmri.isEmri.paket],
+                ['Çözünürlük', isEmri.isEmri.cozunurluk]
+              ].map(([k, v]) => <div key={k}><b>{k}</b><span>{v}</span></div>)}
+            </div>
+
+            <h4>Bambu Studio ayarları</h4>
+            <div className="isEmriGrid dilim">
+              {Object.entries(isEmri.isEmri.dilimleyici).map(([k, v]) => (
+                <div key={k}><b>{k}</b><span>{v}</span></div>
+              ))}
+            </div>
+
+            <button
+              className="ghost full"
+              onClick={() => {
+                const metin = JSON.stringify(isEmri.isEmri, null, 2);
+                navigator.clipboard?.writeText(metin).then(
+                  () => bildir('İş emri panoya kopyalandı.', 'basari'),
+                  () => bildir('Kopyalanamadı.', 'hata')
+                );
+              }}
+            >
+              İş emrini kopyala
+            </button>
+          </div>
+        </Modal>
+      )}
 
       {selectedCustom && (
         <Modal title={`Özel Talep ${selectedCustom.requestNo}`} close={() => setSelectedCustom(null)} wide>
@@ -906,6 +1089,8 @@ function AdminPanel({ stats, orders, customOrders, products, form, setForm, edit
   );
 }
 
-createRoot(document.getElementById('root')).render(
-  SITE_OPEN ? <App /> : <MaintenancePage />
-);
+// Kökü sakla: Vite sıcak yenilemede bu modülü tekrar çalıştırdığında aynı
+// container için ikinci bir createRoot açılmasın.
+const kap = document.getElementById('root');
+const kok = (globalThis.__umeraKok ||= createRoot(kap));
+kok.render(SITE_OPEN ? <App /> : <MaintenancePage />);
