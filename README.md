@@ -76,6 +76,42 @@ Bu sürüm SQL/PostgreSQL veya müşteri üyeliği kullanmaz. Ürün ve sipariş
 - Sipariş API tarafında ürün fiyatı ve stok yeniden kontrol edilir; istemciden gönderilen fiyat doğrudan kabul edilmez.
 - Sipariş, özel talep, görsel yükleme ve admin girişinde temel hız sınırlaması bulunur.
 
+## Havale / EFT ile ödeme
+
+Müşteri siparişi verdikten sonra sipariş fişinde banka, alıcı adı, IBAN, tutar ve
+**açıklamaya yazılacak sipariş numarası** görünür; her biri tek tıkla kopyalanır.
+Ödemeyi siparişle eşleştirmenin tek yolu açıklamadaki sipariş numarasıdır.
+
+Ortam değişkenleri (IBAN'ı koda veya depoya koyma):
+
+```text
+ODEME_IBAN=TR...
+ODEME_ALICI=Hesap sahibinin tam adı
+ODEME_BANKA=Banka adı
+```
+
+`ODEME_ALICI`, müşterinin havale ekranında göreceği isimle birebir aynı olmalı; farklı bir
+isim güveni zedeler ve ödemenin iptaline yol açabilir.
+
+IBAN, ISO 7064 mod-97 sağlamasından geçirilir. Sağlama tutmazsa ödeme kartı müşteriye
+**gösterilmez** ve yönetici panelinde kırmızı uyarı çıkar — yanlış hesaba para gitmesini
+önlemek için.
+
+### Sipariş durumları
+
+`Yeni | Ödeme Bekleniyor | Ödeme Alındı | Onaylandı | Hazırlanıyor | Kargoya Hazır | Kargolandı | Tamamlandı | İptal`
+
+- **Ödeme Bekleniyor** seçildiğinde müşteriye giden bildirim IBAN'ı da içerir (e-postada
+  ödeme kartı olarak, WhatsApp'ta metin olarak).
+- **Ödeme Alındı** seçildiğinde müşteri ödemenin ulaştığını öğrenir.
+- Sipariş listesinde ödeme bekleyen satırlarda **Ödeme bilgisi gönder** düğmesi çıkar; müşterinin
+  WhatsApp'ına IBAN, tutar ve sipariş numarasını hazır mesaj olarak açar.
+- Dashboard'da **Bekleyen Tahsilat** toplamı görünür.
+
+> WhatsApp Business Cloud API şablonları serbest metin kabul etmez; onaylı şablon yalnızca
+> durum adını taşır. IBAN'ın otomatik WhatsApp mesajında da geçmesini istiyorsan ödeme için
+> ayrı bir şablon onaylatman gerekir. Resend ile giden e-posta IBAN'ı zaten içerir.
+
 ## Google Sheets
 Kullanılacak Sheet ID:
 `1tUMUbXKOVxvj0UsuvQpLJKxSGSsFjltNHzGheL8o-70`

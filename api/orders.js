@@ -3,6 +3,7 @@ import { requireAdmin } from '../lib/auth.js';
 import { enforceRateLimit, setRateLimitResponse } from '../lib/rate-limit.js';
 import { quoteAbajur } from '../lib/abajur.js';
 import { sendOrderStatusNotification } from '../lib/notifications.js';
+import { odemeTalimati } from '../lib/odeme.js';
 
 function cleanText(value, max = 500) {
   return String(value || '').trim().slice(0, max);
@@ -55,7 +56,14 @@ export default async function handler(req, res) {
       const total = validatedItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
       const orderNo = `UM-${Date.now().toString(36).toUpperCase()}`;
       await appendOrder({ orderNo, name, phone, email, address, note, items: validatedItems, total });
-      return res.json({ ok: true, orderNo, total });
+      // Ödeme talimatı sipariş yanıtıyla dönüyor: müşteri fişi kapatmadan
+      // IBAN'ı ve açıklamaya yazacağı sipariş numarasını görür. IBAN yalnızca
+      // sipariş verildikten sonra döndüğü için ortalıkta durmuyor.
+      // Sağlaması tutmayan bir IBAN müşteriyi yanlış hesaba para göndermeye
+      // yönlendirebilir. Böyle bir durumda ödeme kartı hiç gösterilmez;
+      // yönetici paneli bunu uyarı olarak öne çıkarır.
+      const odeme = odemeTalimati({ orderNo, total });
+      return res.json({ ok: true, orderNo, total, odeme: odeme?.gecerli ? odeme : null });
     }
 
     if (req.method === 'PUT') {

@@ -883,3 +883,61 @@ td small { display: block; color: #727889; margin-top: 4px; }
   .toastKapsayici { top: auto; bottom: 18px; right: 12px; left: 12px; max-width: none; }
   .isEmriGrid { grid-template-columns: 1fr; }
 }
+
+/* ------------------------------------------------------------------ *
+   HAVALE / EFT ÖDEME
+ * ------------------------------------------------------------------ */
+
+.odemeKarti {
+  text-align: left; margin: 20px 0; padding: 18px;
+  border: 1px solid rgba(239,199,141,.28); border-radius: 15px;
+  background: linear-gradient(160deg, rgba(239,199,141,.09), rgba(255,255,255,.03));
+}
+.odemeBas { margin-bottom: 14px; }
+.odemeBas b { display: block; font-size: 15px; color: #f2d4a8; }
+.odemeBas span { display: block; margin-top: 3px; font-size: 12px; color: var(--muted); }
+
+.odemeSatir {
+  display: flex; align-items: center; gap: 12px;
+  padding: 9px 0; border-top: 1px solid rgba(255,255,255,.07);
+}
+.odemeSatir > span { flex-shrink: 0; width: 62px; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.odemeSatir > b { flex: 1; font-size: 14px; color: var(--white); word-break: break-word; }
+.odemeSatir > b.iban { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 15px; letter-spacing: .04em; }
+.odemeSatir > button, .odemeAciklama > button {
+  flex-shrink: 0; padding: 7px 12px; border-radius: 8px; font-size: 11px; font-weight: 700;
+  border: 1px solid rgba(255,255,255,.16); background: rgba(255,255,255,.06); color: #e6e8f0;
+}
+.odemeSatir > button:hover, .odemeAciklama > button:hover { border-color: rgba(239,199,141,.5); color: #f2d4a8; }
+
+.odemeAciklama {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  margin-top: 14px; padding: 13px 15px; border-radius: 11px;
+  background: rgba(239,199,141,.13); border: 1px solid rgba(239,199,141,.34);
+}
+.odemeAciklama span { display: block; font-size: 11px; letter-spacing: .05em; text-transform: uppercase; color: #d8b98a; }
+.odemeAciklama b { display: block; margin-top: 4px; font-size: 18px; letter-spacing: .04em; color: #ffe6bd; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.odemeNot { margin: 13px 0 0; font-size: 12px; line-height: 1.6; color: var(--muted); }
+
+.odemeBtn {
+  border: 1px solid rgba(239,199,141,.34); border-radius: 9px; padding: 9px 10px;
+  background: rgba(239,199,141,.13); color: #f2d4a8; font-size: 11px; font-weight: 800;
+}
+.odemeBtn:hover { border-color: rgba(239,199,141,.62); }
+.odemeBekliyor { display: block; margin-top: 5px; color: #efc78d !important; font-weight: 700; }
+
+@media (max-width: 620px) {
+  .odemeSatir { flex-wrap: wrap; }
+  .odemeSatir > span { width: 100%; }
+  .odemeAciklama { flex-direction: column; align-items: stretch; }
+}
+
+.odemeUyari {
+  margin: 18px 0; padding: 14px 16px; border-radius: 12px; font-size: 13px; line-height: 1.6;
+  background: rgba(224,164,76,.11); border: 1px solid rgba(224,164,76,.36); color: #f0cd94;
+}
+.odemeUyari.kritik { background: rgba(239,118,96,.12); border-color: rgba(239,118,96,.4); color: #fca5a5; }
+.odemeUyari code {
+  padding: 2px 6px; border-radius: 5px; background: rgba(0,0,0,.3);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px;
+}

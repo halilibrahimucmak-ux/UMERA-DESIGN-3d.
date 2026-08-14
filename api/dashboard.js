@@ -1,5 +1,6 @@
 import { requireAdmin } from '../lib/auth.js';
 import { getDashboard, getOrders, getCustomOrders } from '../lib/sheets.js';
+import { odemeBilgisi } from '../lib/odeme.js';
 
 export default async function handler(req, res) {
   try {
@@ -8,7 +9,10 @@ export default async function handler(req, res) {
       return res.json({
         stats: await getDashboard(),
         orders: await getOrders(),
-        customOrders: await getCustomOrders()
+        customOrders: await getCustomOrders(),
+        // Yönetici panelindeki "Ödeme bilgisi gönder" bunu kullanıyor;
+        // ayarlanmamışsa panel uyarı gösterir.
+        odeme: odemeBilgisi()
       });
     }
     return res.status(405).json({ error: 'Method not allowed' });

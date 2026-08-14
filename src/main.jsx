@@ -14,7 +14,8 @@ const SEPET_ANAHTAR = 'umera.sepet.v2';
 const WA = import.meta.env.VITE_WHATSAPP_NUMBER || '';
 const EMAIL = import.meta.env.VITE_COMPANY_EMAIL || 'siparis@umeradesign3d.com';
 const CATS = ['Tümü', 'Figür & Oyuncak', 'Ev Dekorasyon', 'Masaüstü Aksesuar', 'Özel Tasarım', 'Sanat & Dekor', 'Diğer'];
-const ORDER_STATUSES = ['Yeni', 'Onaylandı', 'Hazırlanıyor', 'Kargoya Hazır', 'Kargolandı', 'Tamamlandı', 'İptal'];
+const ORDER_STATUSES = ['Yeni', 'Ödeme Bekleniyor', 'Ödeme Alındı', 'Onaylandı', 'Hazırlanıyor', 'Kargoya Hazır', 'Kargolandı', 'Tamamlandı', 'İptal'];
+const ODEME_BEKLEYEN = ['Yeni', 'Ödeme Bekleniyor'];
 const CUSTOM_STATUSES = ['Yeni', 'İnceleniyor', 'Fiyat Verildi', 'Onaylandı', 'Üretimde', 'Tamamlandı', 'İptal'];
 const DEMO = [
   {
@@ -150,6 +151,7 @@ function App() {
   const [stats, setStats] = useState(null);
   const [orders, setOrders] = useState([]);
   const [customOrders, setCustomOrders] = useState([]);
+  const [odeme, setOdeme] = useState(null);
   const [edit, setEdit] = useState(null);
   const [imageUploading, setImageUploading] = useState(false);
   const [customUploading, setCustomUploading] = useState(false);
@@ -338,7 +340,7 @@ function App() {
         `TOPLAM: ${money(confirmedTotal)}`
       ].filter(Boolean).join('\n');
 
-      setReceipt({ text: lines, orderNo });
+      setReceipt({ text: lines, orderNo, odeme: response.odeme || null });
       setCheckout(false);
       setCart([]);
       bildir(`Siparişin alındı. Sipariş no: ${orderNo}`, 'basari');
@@ -468,6 +470,7 @@ function App() {
       setStats(data.stats);
       setOrders(data.orders);
       setCustomOrders(data.customOrders || []);
+      setOdeme(data.odeme || null);
     } catch (error) {
       if (error.message.includes('Yetkisiz')) {
         setAdmin(false);
@@ -707,6 +710,7 @@ function App() {
           stats={stats}
           orders={orders}
           customOrders={customOrders}
+          odeme={odeme}
           products={products}
           form={form}
           setForm={setForm}
@@ -804,8 +808,15 @@ function App() {
       )}
 
       {receipt && (
-        <Modal title="Sipariş Fişi" close={() => setReceipt(null)}>
-          <div className="receipt"><div className="check">✓</div><h3>Siparişiniz alındı</h3><p>Sipariş No: <b>{receipt.orderNo}</b></p><pre>{receipt.text}</pre><button className="ghost full" onClick={() => navigator.clipboard.writeText(receipt.text)}>Fişi Kopyala</button></div>
+        <Modal title="Sipariş Fişi" close={() => setReceipt(null)} wide={Boolean(receipt.odeme)}>
+          <div className="receipt">
+            <div className="check">✓</div>
+            <h3>Siparişiniz alındı</h3>
+            <p>Sipariş No: <b>{receipt.orderNo}</b></p>
+            {receipt.odeme && <OdemeKarti odeme={receipt.odeme} />}
+            <pre>{receipt.text}</pre>
+            <button className="ghost full" onClick={() => { navigator.clipboard?.writeText(receipt.text); bildir('Fiş kopyalandı.', 'basari'); }}>Fişi Kopyala</button>
+          </div>
         </Modal>
       )}
 
@@ -820,6 +831,67 @@ function App() {
           </form>
         </Modal>
       )}
+    </div>
+  );
+}
+
+/**
+ * Havale/EFT kartı. Kritik ayrıntı açıklama satırı: gelen ödemeyi siparişle
+ * eşleştirmenin tek yolu sipariş numarası olduğu için ayrıca vurgulanıyor
+ * ve tek tıkla kopyalanabiliyor.
+ */
+function OdemeKarti({ odeme }) {
+  const [kopyalanan, setKopyalanan] = useState('');
+
+  function kopyala(anahtar, deger) {
+    const yaz = navigator.clipboard?.writeText(String(deger));
+    Promise.resolve(yaz).then(
+      () => {
+        setKopyalanan(anahtar);
+        setTimeout(() => setKopyalanan(''), 1800);
+      },
+      () => bildir('Kopyalanamadı, elle seçebilirsin.', 'hata')
+    );
+  }
+
+  const satirlar = [
+    odeme.banka && ['banka', 'Banka', odeme.banka],
+    ['alici', 'Alıcı', odeme.alici],
+    ['iban', 'IBAN', odeme.iban],
+    ['tutar', 'Tutar', money(odeme.tutar)]
+  ].filter(Boolean);
+
+  return (
+    <div className="odemeKarti">
+      <div className="odemeBas">
+        <b>Havale / EFT ile ödeme</b>
+        <span>Ödemen ulaştığında üretime başlıyoruz</span>
+      </div>
+
+      {satirlar.map(([anahtar, etiket, deger]) => (
+        <div className="odemeSatir" key={anahtar}>
+          <span>{etiket}</span>
+          <b className={anahtar === 'iban' ? 'iban' : undefined}>{deger}</b>
+          <button type="button" onClick={() => kopyala(anahtar, deger)}>
+            {kopyalanan === anahtar ? '✓' : 'Kopyala'}
+          </button>
+        </div>
+      ))}
+
+      <div className="odemeAciklama">
+        <div>
+          <span>Açıklama alanına mutlaka yaz</span>
+          <b>{odeme.aciklama}</b>
+        </div>
+        <button type="button" onClick={() => kopyala('aciklama', odeme.aciklama)}>
+          {kopyalanan === 'aciklama' ? '✓ Kopyalandı' : 'Kopyala'}
+        </button>
+      </div>
+
+      <p className="odemeNot">
+        Ödemeni siparişinle bu numara üzerinden eşleştiriyoruz. Havaleyi yaptıktan sonra
+        dekontunu WhatsApp'tan iletirsen onayı daha hızlı veririz.
+      </p>
     </div>
   );
 }
@@ -907,7 +979,7 @@ function Modal({ title, close, children, wide = false }) {
   return <div className="modalBack" onMouseDown={event => { if (event.target === event.currentTarget) close(); }}><div className={wide ? 'modal wide' : 'modal'}><div className="modalHead"><h3>{title}</h3><button type="button" onClick={close} aria-label="Kapat">×</button></div>{children}</div></div>;
 }
 
-function AdminPanel({ stats, orders, customOrders, products, form, setForm, edit, newProduct, editProduct, saveProduct, delProduct, uploadImage, imageUploading, loadDashboard, logout, updateOrder, notifyOrder }) {
+function AdminPanel({ stats, orders, customOrders, odeme, products, form, setForm, edit, newProduct, editProduct, saveProduct, delProduct, uploadImage, imageUploading, loadDashboard, logout, updateOrder, notifyOrder }) {
   const [customFilter, setCustomFilter] = useState('Tümü');
   const [selectedCustom, setSelectedCustom] = useState(null);
   const [stlLoading, setStlLoading] = useState('');
@@ -926,6 +998,33 @@ function AdminPanel({ stats, orders, customOrders, products, form, setForm, edit
     } catch (error) {
       bildir(error.message, 'hata');
     }
+  }
+
+  /** Müşteriye IBAN + sipariş no + tutarı WhatsApp'tan gönderir. */
+  function odemeBilgisiGonder(order) {
+    if (!odeme) {
+      return bildir('Ödeme bilgisi tanımlı değil. Vercel ortam değişkenlerine ODEME_IBAN ve ODEME_ALICI ekle.', 'hata');
+    }
+    const digits = String(order.phone || '').replace(/\D/g, '');
+    if (!digits) return bildir('Müşterinin telefon numarası bulunamadı.', 'hata');
+    const phone = digits.startsWith('90') ? digits : digits.startsWith('0') ? `90${digits.slice(1)}` : digits;
+    const metin = [
+      `Merhaba ${order.name},`,
+      '',
+      `${order.orderNo} numaralı siparişiniz için ödeme bilgileri:`,
+      '',
+      odeme.banka ? `Banka: ${odeme.banka}` : '',
+      `Alıcı: ${odeme.alici}`,
+      `IBAN: ${odeme.iban}`,
+      `Tutar: ${money(order.total)}`,
+      `Açıklama: ${order.orderNo}`,
+      '',
+      'Havale/EFT açıklamasına sipariş numaranızı yazmayı unutmayın.',
+      'Ödemeniz ulaştığında üretime başlıyoruz.',
+      '',
+      'UMERA Design 3D'
+    ].filter(Boolean).join('\n');
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(metin)}`, '_blank', 'noopener,noreferrer');
   }
 
   function customWhatsApp(order) {
@@ -1000,12 +1099,25 @@ function AdminPanel({ stats, orders, customOrders, products, form, setForm, edit
   return (
     <main className="adminPage wrap">
       <div className="adminTop"><div><div className="eyebrow">YÖNETİM MERKEZİ</div><h1>UMERA <em>Admin</em></h1><p>Ürünlerini, siparişlerini ve özel tasarım taleplerini tek yerden yönet.</p></div><div className="adminActions"><button className="ghost" onClick={loadDashboard}>↻ Yenile</button><button className="ghost" onClick={logout}>Çıkış</button></div></div>
+      {!odeme && (
+        <div className="odemeUyari">
+          ⚠ Havale bilgisi tanımlı değil. Müşteriler sipariş fişinde IBAN göremiyor. Vercel ortam
+          değişkenlerine <code>ODEME_IBAN</code> ve <code>ODEME_ALICI</code> ekle.
+        </div>
+      )}
+      {odeme && !odeme.gecerli && (
+        <div className="odemeUyari kritik">
+          ⚠ <b>{odeme.iban}</b> geçerli bir TR IBAN değil (sağlama tutmuyor). Müşteriye yanlış hesap
+          gösterilmemesi için ödeme kartı gizlendi. <code>ODEME_IBAN</code> değerini kontrol et.
+        </div>
+      )}
       <div className="stats">{[
         ['Toplam Ürün', products.length, '📦'],
         ['Toplam Sipariş', stats?.totalOrders ?? '—', '🧾'],
         ['Bu Ay', stats?.monthOrders ?? '—', '📅'],
         ['Toplam Ciro', stats ? money(stats.totalRevenue) : '—', '₺'],
         ['Bekleyen', stats?.pending ?? '—', '⏳'],
+        ['Bekleyen Tahsilat', stats ? money(stats.bekleyenTahsilat || 0) : '—', '💳'],
         ['Özel Tasarım', customOrders.length, '🎨']
       ].map(item => <div className="stat" key={item[0]}><span>{item[2]}</span><small>{item[0]}</small><b>{item[1]}</b></div>)}</div>
 
@@ -1014,7 +1126,7 @@ function AdminPanel({ stats, orders, customOrders, products, form, setForm, edit
         <section className="panel editor"><div className="panelHead"><div><b>{edit ? 'Ürünü Düzenle' : 'Yeni Ürün'}</b><span>Bilgileri girip kaydet</span></div></div><form className="form" onSubmit={saveProduct}><Field label="Ürün adı *" value={form.name} onChange={event => setForm({ ...form, name: event.target.value })} required /><label>Kategori<select value={form.category} onChange={event => setForm({ ...form, category: event.target.value })}>{CATS.filter(item => item !== 'Tümü').map(category => <option key={category}>{category}</option>)}</select></label><div className="two"><Field label="Fiyat (TL) *" type="number" min="0" value={form.price} onChange={event => setForm({ ...form, price: event.target.value })} required /><Field label="Stok *" type="number" min="0" value={form.stock} onChange={event => setForm({ ...form, stock: event.target.value })} required /></div><label>Ürün Görseli<input type="file" accept="image/jpeg,image/png,image/webp" onChange={uploadImage} /></label>{imageUploading && <div className="notice">Görsel yükleniyor...</div>}{form.image && <img className="preview" src={form.image} alt="Önizleme" />}<Field label="Görsel URL (opsiyonel)" value={form.image} onChange={event => setForm({ ...form, image: event.target.value })} /><label>Açıklama<textarea rows="4" value={form.description} onChange={event => setForm({ ...form, description: event.target.value })} /></label><div className="two"><button className="primary">{edit ? 'Değişiklikleri Kaydet' : 'Ürünü Yayınla'}</button><button type="button" className="ghost" onClick={newProduct}>Temizle</button></div></form></section>
       </div>
 
-      <section className="panel orders"><div className="panelHead"><div><b>Sipariş Yönetimi</b><span>Durumu değiştirdiğinizde müşteriye otomatik bildirim gönderilir · sipariş tasarımları baskıya hazır STL olarak indirilir</span></div></div><div className="tableWrap"><table><thead><tr><th>Sipariş</th><th>Müşteri</th><th>Ürünler</th><th>Tutar</th><th>Durum</th><th>İşlem</th></tr></thead><tbody>{orders.length ? orders.map(order => <tr key={order.orderNo}><td><b>{order.orderNo}</b><small>{new Date(order.date).toLocaleString('tr-TR')}</small></td><td><b>{order.name}</b><small>{order.phone}</small>{order.email && <small>{order.email}</small>}<small>{order.address}</small></td><td>{order.items}{order.configurations?.length > 0 && <small className="productionBadge">◈ {order.configurations.length} STL üretime hazır</small>}</td><td><b>{money(order.total)}</b></td><td><select className="statusSelect" value={order.status} onChange={event => updateOrder(order, event.target.value)}>{ORDER_STATUSES.map(status => <option key={status}>{status}</option>)}</select><small>Değişiklikte bildirim gider</small></td><td><div className="orderActions">{order.configurations?.map((configuration, index) => { const key = `${order.orderNo}-${index}`; return <div className="stlGrup" key={key}><button className="productionBtn" disabled={Boolean(stlLoading)} onClick={() => downloadAbajurProduction(order, configuration, index)}>{stlLoading === key ? 'STL hazırlanıyor…' : `⬇ Abajur ${index + 1} · Baskıya Hazır STL`}</button><button className="isEmriBtn" disabled={Boolean(stlLoading)} onClick={() => showIsEmri(order, index)}>{stlLoading === `rapor-${order.orderNo}-${index}` ? 'Hazırlanıyor…' : '⚙ İş emri'}</button></div>; })}<button className="shipBtn" onClick={() => notifyOrder(order)}>Müşteriye WhatsApp aç</button></div></td></tr>) : <tr><td colSpan="6" className="empty">Henüz sipariş yok.</td></tr>}</tbody></table></div></section>
+      <section className="panel orders"><div className="panelHead"><div><b>Sipariş Yönetimi</b><span>Durumu değiştirdiğinizde müşteriye otomatik bildirim gönderilir · sipariş tasarımları baskıya hazır STL olarak indirilir</span></div></div><div className="tableWrap"><table><thead><tr><th>Sipariş</th><th>Müşteri</th><th>Ürünler</th><th>Tutar</th><th>Durum</th><th>İşlem</th></tr></thead><tbody>{orders.length ? orders.map(order => <tr key={order.orderNo}><td><b>{order.orderNo}</b><small>{new Date(order.date).toLocaleString('tr-TR')}</small></td><td><b>{order.name}</b><small>{order.phone}</small>{order.email && <small>{order.email}</small>}<small>{order.address}</small></td><td>{order.items}{order.configurations?.length > 0 && <small className="productionBadge">◈ {order.configurations.length} STL üretime hazır</small>}</td><td><b>{money(order.total)}</b>{ODEME_BEKLEYEN.includes(order.status) && <small className="odemeBekliyor">Ödeme bekliyor</small>}</td><td><select className="statusSelect" value={order.status} onChange={event => updateOrder(order, event.target.value)}>{ORDER_STATUSES.map(status => <option key={status}>{status}</option>)}</select><small>Değişiklikte bildirim gider</small></td><td><div className="orderActions">{order.configurations?.map((configuration, index) => { const key = `${order.orderNo}-${index}`; return <div className="stlGrup" key={key}><button className="productionBtn" disabled={Boolean(stlLoading)} onClick={() => downloadAbajurProduction(order, configuration, index)}>{stlLoading === key ? 'STL hazırlanıyor…' : `⬇ Abajur ${index + 1} · Baskıya Hazır STL`}</button><button className="isEmriBtn" disabled={Boolean(stlLoading)} onClick={() => showIsEmri(order, index)}>{stlLoading === `rapor-${order.orderNo}-${index}` ? 'Hazırlanıyor…' : '⚙ İş emri'}</button></div>; })}{ODEME_BEKLEYEN.includes(order.status) && <button className="odemeBtn" onClick={() => odemeBilgisiGonder(order)}>₺ Ödeme bilgisi gönder</button>}<button className="shipBtn" onClick={() => notifyOrder(order)}>Müşteriye WhatsApp aç</button></div></td></tr>) : <tr><td colSpan="6" className="empty">Henüz sipariş yok.</td></tr>}</tbody></table></div></section>
 
       <section className="panel customOrdersAdmin"><div className="panelHead"><div><b>Özel Tasarım Talepleri</b><span>Google Sheets → CustomOrders · müşterilerin gönderdiği fotoğraflar ve talepler</span></div><div className="customFilters">{['Tümü', ...CUSTOM_STATUSES].map(status => <button key={status} className={customFilter === status ? 'chip active' : 'chip'} onClick={() => setCustomFilter(status)}>{status}</button>)}</div></div><div className="customCards">{filteredCustom.length ? filteredCustom.map(order => <article className="customOrderCard" key={order.requestNo} onClick={() => setSelectedCustom(order)}><div className="customOrderTop"><div><b>{order.requestNo}</b><small>{new Date(order.date).toLocaleString('tr-TR')}</small></div><span className="status">{order.status}</span></div><div className="customOrderBody"><div><b>{order.name}</b><small>{order.phone || order.email || 'İletişim yok'}</small><p>{order.details}</p><small>Ölçü: {order.dimensions || '-'} · Renk: {order.color || '-'} · Adet: {order.quantity}</small></div><div className="customThumbs">{order.images?.slice(0, 3).map((url, index) => <img key={url} src={url} alt={`Referans ${index + 1}`} />)}{order.images?.length > 3 && <span>+{order.images.length - 3}</span>}</div></div><div className="customOrderActions"><select className="statusSelect" value={order.status} onClick={event => event.stopPropagation()} onChange={event => { event.stopPropagation(); updateCustom(order, event.target.value); }}>{CUSTOM_STATUSES.map(status => <option key={status}>{status}</option>)}</select>{order.phone && <button className="ghost smallBtn" onClick={event => { event.stopPropagation(); customWhatsApp(order); }}>WhatsApp</button>}</div></article>) : <div className="empty">Bu filtrede özel tasarım talebi yok.</div>}</div></section>
 
