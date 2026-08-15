@@ -11,6 +11,7 @@ const AbajurKonfigurator = lazy(() => import('./components/AbajurKonfigurator.js
 
 const SITE_OPEN = import.meta.env.VITE_SITE_OPEN !== 'false';
 const SEPET_ANAHTAR = 'umera.sepet.v2';
+const SON_SIPARIS_ANAHTAR = 'umera.sonSiparis.v1';
 
 const WA = import.meta.env.VITE_WHATSAPP_NUMBER || '';
 const EMAIL = import.meta.env.VITE_COMPANY_EMAIL || 'siparis@umeradesign3d.com';
@@ -171,6 +172,17 @@ function App() {
   const [productDetail, setProductDetail] = useState(null);
   const [hukuk, setHukuk] = useState('');
   const firma = useMemo(() => firmaBilgisi(), []);
+  // Son sipariş fişi — müşteri WhatsApp'a geçip dönmese bile ödeme
+  // bilgilerini geri çağırabilsin diye saklanıyor.
+  const [sonSiparis, setSonSiparis] = useState(() => {
+    try {
+      const kayit = JSON.parse(localStorage.getItem(SON_SIPARIS_ANAHTAR) || 'null');
+      if (!kayit?.orderNo) return null;
+      return Date.now() - (kayit.tarih || 0) < 21 * 864e5 ? kayit : null;
+    } catch {
+      return null;
+    }
+  });
 
   const loadProducts = async () => {
     setLoading(true);
@@ -302,7 +314,6 @@ function App() {
     if (!cart.length || submittingOrder) return;
 
     const formData = new FormData(event.currentTarget);
-    const channel = event.nativeEvent?.submitter?.value || 'whatsapp';
     const data = {
       name: String(formData.get('name') || '').trim(),
       phone: String(formData.get('phone') || '').trim(),
@@ -329,6 +340,11 @@ function App() {
       });
       const orderNo = response.orderNo;
       const confirmedTotal = Number(response.total);
+      const odeme = response.odeme || null;
+
+      /* Ödeme bilgisi mesajın İÇİNE de konuyor. wa.me bağlantısı müşterinin
+         kendi sohbetine yazdığı için bu metin müşterinin WhatsApp geçmişinde
+         kalıcı olarak duruyor; fişi kapatsa bile IBAN'a ulaşabiliyor. */
       const lines = [
         'UMERA DESIGN 3D — YENİ SİPARİŞ',
         `Sipariş No: ${orderNo}`,
@@ -340,21 +356,28 @@ function App() {
         '',
         ...data.items.map(item => `${item.name} x${item.quantity} — ${money(item.price * item.quantity)}`),
         '',
-        `TOPLAM: ${money(confirmedTotal)}`
+        `TOPLAM: ${money(confirmedTotal)}`,
+        ...(odeme ? [
+          '',
+          '— ÖDEME BİLGİLERİ —',
+          odeme.banka ? `Banka: ${odeme.banka}` : '',
+          `Alıcı: ${odeme.alici}`,
+          `IBAN: ${odeme.iban}`,
+          `Açıklama: ${orderNo}`,
+          '',
+          'Havale açıklamasına sipariş numarasını yazmayı unutmayın.'
+        ] : [])
       ].filter(Boolean).join('\n');
 
-      setReceipt({ text: lines, orderNo, odeme: response.odeme || null });
+      const fis = { text: lines, orderNo, odeme, tarih: Date.now(), toplam: confirmedTotal };
+      setReceipt(fis);
       setCheckout(false);
       setCart([]);
+      // Fiş saklanıyor: müşteri sekmeyi kapatsa veya WhatsApp'a geçip
+      // dönmese bile ödeme bilgilerine tekrar ulaşabilsin.
+      try { localStorage.setItem(SON_SIPARIS_ANAHTAR, JSON.stringify(fis)); } catch { /* yok sayılır */ }
+      setSonSiparis(fis);
       bildir(`Siparişin alındı. Sipariş no: ${orderNo}`, 'basari');
-
-      if (channel === 'email') {
-        window.open(`mailto:${EMAIL}?subject=${encodeURIComponent(`UMERA Design 3D - ${orderNo}`)}&body=${encodeURIComponent(lines)}`, '_blank');
-      } else if (WA) {
-        window.open(`https://wa.me/${WA}?text=${encodeURIComponent(lines)}`, '_blank');
-      } else {
-        window.open(`mailto:${EMAIL}?subject=${encodeURIComponent(`UMERA Design 3D - ${orderNo}`)}&body=${encodeURIComponent(lines)}`, '_blank');
-      }
     } catch (error) {
       bildir(`Sipariş kaydedilemedi: ${error.message} Sepetin duruyor, tekrar deneyebilirsin.`, 'hata');
     } finally {
@@ -604,6 +627,29 @@ function App() {
       <div className="glow glow1" />
       <div className="glow glow2" />
 
+      {sonSiparis && !receipt && (
+        <div className="sonSiparisSerit">
+          <span>
+            <b>{sonSiparis.orderNo}</b> numaralı siparişin
+            {sonSiparis.odeme ? ' — ödeme bilgilerin hazır' : ' kaydedildi'}
+          </span>
+          <button type="button" onClick={() => setReceipt(sonSiparis)}>
+            {sonSiparis.odeme ? 'Ödeme bilgilerini aç' : 'Fişi aç'}
+          </button>
+          <button
+            type="button"
+            className="kapat"
+            aria-label="Gizle"
+            onClick={() => {
+              setSonSiparis(null);
+              try { localStorage.removeItem(SON_SIPARIS_ANAHTAR); } catch { /* yok sayılır */ }
+            }}
+          >
+            ×
+          </button>
+        </div>
+      )}
+
       <header className="header">
         <div className="wrap nav">
           <button className="brand" onClick={logoTap} aria-label="UMERA Design 3D ana sayfa">
@@ -795,8 +841,8 @@ function App() {
             <label className="consent"><input type="checkbox" required /> <span><a href="#" onClick={event => { event.preventDefault(); setHukuk('mesafeli'); }}>Mesafeli Satış Sözleşmesi</a>, <a href="#" onClick={event => { event.preventDefault(); setHukuk('iade'); }}>İptal ve İade Koşulları</a> ve <a href="#" onClick={event => { event.preventDefault(); setHukuk('kvkk'); }}>KVKK Aydınlatma Metni</a>'ni okudum, kabul ediyorum.</span></label>
             <div className="notice">Sipariş önce sisteme kaydedilir ve size benzersiz bir sipariş numarası verilir. Ödeme bilgileri sipariş fişinde görünür.</div>
             <div className="notice uyari">Kişiye özel üretilen ürünlerde, üretim başladıktan sonra cayma hakkı kullanılamaz (Mesafeli Sözleşmeler Yönetmeliği m.15/1-b). Üretim başlamadan önce siparişini ücretsiz iptal edebilirsin.</div>
-            <div className="two"><button className="primary" name="channel" value="whatsapp" disabled={!WA || submittingOrder}>{submittingOrder ? 'Kaydediliyor...' : 'WhatsApp'}</button><button className="ghost" name="channel" value="email" disabled={submittingOrder}>E-posta</button></div>
-            <small className="channelHint">Toplam: {money(total)}</small>
+            <button className="primary full" disabled={submittingOrder}>{submittingOrder ? 'Kaydediliyor...' : `Siparişi Oluştur — ${money(total)}`}</button>
+            <small className="channelHint">Bir sonraki adımda ödeme bilgilerini göreceksin. Sipariş, sen bildirmeden de sistemimize kaydedilir.</small>
           </form>
         </Modal>
       )}
@@ -821,14 +867,71 @@ function App() {
       )}
 
       {receipt && (
-        <Modal title="Sipariş Fişi" close={() => setReceipt(null)} wide={Boolean(receipt.odeme)}>
+        <Modal
+          title="Siparişiniz Alındı"
+          close={() => {
+            if (receipt.odeme && !confirm('Ödeme bilgilerini kaydettiniz mi? Bu ekranı daha sonra sayfanın üstündeki bağlantıdan tekrar açabilirsiniz.')) return;
+            setReceipt(null);
+          }}
+          wide
+        >
           <div className="receipt">
             <div className="check">✓</div>
-            <h3>Siparişiniz alındı</h3>
-            <p>Sipariş No: <b>{receipt.orderNo}</b></p>
-            {receipt.odeme && <OdemeKarti odeme={receipt.odeme} />}
-            <pre>{receipt.text}</pre>
-            <button className="ghost full" onClick={() => { navigator.clipboard?.writeText(receipt.text); bildir('Fiş kopyalandı.', 'basari'); }}>Fişi Kopyala</button>
+            <h3>Sipariş No: {receipt.orderNo}</h3>
+
+            {receipt.odeme ? (
+              <>
+                <p className="receiptLead">
+                  Siparişiniz kaydedildi. <b>Üretime başlamamız için ödemenizi bekliyoruz.</b>
+                </p>
+                <OdemeKarti odeme={receipt.odeme} />
+              </>
+            ) : (
+              <p className="receiptLead">Siparişiniz kaydedildi. Ödeme bilgileri için sizinle iletişime geçeceğiz.</p>
+            )}
+
+            <div className="receiptAksiyon">
+              {WA && (
+                <button
+                  className="primary"
+                  onClick={() => {
+                    window.open(`https://wa.me/${WA}?text=${encodeURIComponent(receipt.text)}`, '_blank', 'noopener,noreferrer');
+                    bildir('WhatsApp açıldı. Mesajı gönderdiğinde ödeme bilgileri sohbetinde kalır.', 'basari');
+                  }}
+                >
+                  WhatsApp'tan bize bildir
+                </button>
+              )}
+              <button
+                className="ghost"
+                onClick={() => window.open(`mailto:${EMAIL}?subject=${encodeURIComponent(`UMERA Design 3D - ${receipt.orderNo}`)}&body=${encodeURIComponent(receipt.text)}`, '_blank')}
+              >
+                E-posta ile bildir
+              </button>
+              <button
+                className="ghost"
+                onClick={() => {
+                  navigator.clipboard?.writeText(receipt.text).then(
+                    () => bildir('Sipariş ve ödeme bilgileri kopyalandı.', 'basari'),
+                    () => bildir('Kopyalanamadı.', 'hata')
+                  );
+                }}
+              >
+                Tümünü kopyala
+              </button>
+            </div>
+
+            {receipt.odeme && (
+              <p className="receiptNot">
+                WhatsApp mesajı ödeme bilgilerini de içerir; gönderdiğinizde IBAN kendi sohbet
+                geçmişinizde kalır ve istediğiniz zaman ulaşabilirsiniz.
+              </p>
+            )}
+
+            <details className="receiptDetay">
+              <summary>Sipariş özetini gör</summary>
+              <pre>{receipt.text}</pre>
+            </details>
           </div>
         </Modal>
       )}

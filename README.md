@@ -226,9 +226,11 @@ npm run build
 Sonra GitHub repository'sini Vercel'e bağla ve Deploy et. Vercel'de yukarıdaki Environment Variables'ı ekleyip yeni deployment oluştur.
 
 ## Sipariş akışı
-Müşteri ürünleri sepete ekler → sipariş popup'ında ad, telefon, e-posta, adres ve not girer → sipariş Vercel API üzerinden Google Sheets `Orders` sayfasına kaydedilir → WhatsApp varsa WhatsApp mesajı açılır, yoksa e-posta hazırlanır → müşteriye sipariş fişi gösterilir.
+Müşteri ürünleri sepete ekler → sipariş formunda ad, telefon, e-posta, adres ve not girer → sipariş Vercel API üzerinden Google Sheets `Orders` sayfasına kaydedilir → **sipariş fişi ve ödeme bilgileri gösterilir** → müşteri isterse WhatsApp veya e-posta ile bildirim gönderir.
 
-Not: WhatsApp ve mail uygulamasını açmak tarayıcı/cihaz davranışına bağlıdır. Siparişin yönetim kaydı API üzerinden Google Sheets'e ayrıca yazılır.
+Yönlendirme kendiliğinden yapılmaz. Eskiden sipariş sonrası WhatsApp otomatik açılıyordu; fiş arkada kalıyor ve müşteri IBAN'ı hiç görmeden gidebiliyordu. Ayrıca `window.open` bir `await` sonrası çağrıldığı için mobil tarayıcılar bunu pop-up olarak engelleyebiliyordu. Şimdi ödeme bilgisi dört ayrı yerde duruyor: fiş ekranı, WhatsApp mesajının içi (müşterinin kendi sohbet geçmişinde kalır), `localStorage` (sayfa üstündeki şeritten 21 gün geri çağrılabilir) ve satıcının panelindeki `Ödeme bilgisi gönder` düğmesi.
+
+Not: Sipariş, müşteri hiçbir bildirim göndermese bile Google Sheets'e kaydedilir; WhatsApp/e-posta yalnızca kolaylıktır.
 
 
 ## Sipariş Yönetimi (güncel)
