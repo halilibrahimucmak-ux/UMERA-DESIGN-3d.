@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import { readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -23,6 +23,15 @@ function yerelApi() {
     name: 'umera-yerel-api',
     apply: 'serve',
     configureServer(server) {
+      // Vite .env dosyasını yalnızca VITE_ önekli değişkenler için istemciye
+      // açar; sunucu fonksiyonları process.env okuduğundan hepsini buraya
+      // yüklüyoruz. Aksi halde ödeme, kargo ve Sheets ayarları yerelde
+      // tanımsız kalıyor ve özellikler sessizce kapalı görünüyor.
+      const ortam = loadEnv(server.config.mode, kok, '');
+      for (const [anahtar, deger] of Object.entries(ortam)) {
+        if (process.env[anahtar] === undefined) process.env[anahtar] = deger;
+      }
+
       const uclar = new Set(
         readdirSync(resolve(kok, 'api'))
           .filter((f) => f.endsWith('.js'))

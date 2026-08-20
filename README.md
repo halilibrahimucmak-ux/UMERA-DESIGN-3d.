@@ -190,6 +190,40 @@ için `gorseller` boşsa `gorsel` alanına düşülür.
 Görseller yüklenmeden önce tarayıcıda küçültülüp WebP'ye çevrilir (bkz. Vercel 4,5 MB
 sınırı), yani 12 görsellik bir ürün bile toplamda birkaç MB yer kaplar.
 
+## Kargo ücreti
+
+Ortam değişkenleriyle yönetilir:
+
+```text
+KARGO_UCRETI=150        # 0 veya boş = kargo alınmaz, sitede hiç gösterilmez
+KARGO_BEDAVA_ESIK=2000  # sepet ara toplamı bunu geçerse kargo bedava (0 = kapalı)
+```
+
+Ücret ürün kartında fiyatın altında (`+ ₺150 kargo`), ürün detayında, sepette ve sipariş
+formunda ayrı satır olarak görünür. Eşik tanımlıysa sepette "₺380 daha eklersen kargo
+bedava" ipucu çıkar.
+
+**Toplam sunucuda hesaplanır.** `/api/ayarlar` yalnızca gösterim içindir; sipariş toplamı
+`api/orders.js` içinde `lib/kargo.js` ile yeniden hesaplanır, istemciden gelen tutar hiç
+kullanılmaz. Ekranda gösterilen ücretin tahsil edilenle ayrışmaması için istemci bu ucu
+`no-cache` ile okur.
+
+Kargo bedeli sipariş toplamına dahildir ve Sheets'te ürün satırının sonunda
+`| Kargo: 150 TL` olarak ayrıca görünür.
+
+## Minimum sipariş adedi
+
+Her ürün için yönetici panelinden **Minimum sipariş adedi** belirlenir (1 = sınır yok).
+Products sayfasındaki `min_adet` (K) sütununda tutulur, sütunu uygulama kendisi oluşturur.
+
+Müşteri tarafında: ürün kartında "en az N adet" şeridi, sepete eklerken doğrudan N adet
+eklenir ve sepette adet N'in altına indirilemez.
+
+**Kural sunucuda da uygulanır** (`lib/siparis-dogrula.js`): sepeti düzenleyerek veya
+doğrudan API'ye istek atarak minimumun altında sipariş verilemez. Stok minimumun altına
+düşmüşse "stok yetersiz" yerine ayrı bir mesaj verilir — müşteri adedi düşürerek o siparişi
+veremeyeceği için yanıltıcı olurdu.
+
 ## Google Sheets
 Kullanılacak Sheet ID:
 `1tUMUbXKOVxvj0UsuvQpLJKxSGSsFjltNHzGheL8o-70`
@@ -197,7 +231,7 @@ Kullanılacak Sheet ID:
 İlk kullanımda API `Products` ve `Orders` sayfalarını ve başlıklarını otomatik oluşturur. Google Sheets'in herkese açık olması okuma için yeterli değildir; admin panelinin ürün/sipariş yazabilmesi için Google Cloud'daki service account e-posta adresini bu Sheet'e **Düzenleyici** olarak paylaşmalısın.
 
 ### Products sütunları
-`id | urun | kategori | fiyat | stok | gorsel | aciklama | aktif | olusturma_tarihi | gorseller`
+`id | urun | kategori | fiyat | stok | gorsel | aciklama | aktif | olusturma_tarihi | gorseller | min_adet`
 
 ### Orders sütunları
 `siparis_no | tarih | musteri | telefon | email | adres | not | urunler | toplam | durum`

@@ -1138,3 +1138,47 @@ td small { display: block; color: #727889; margin-top: 4px; }
   .lightboxSerit button img { width: 42px; height: 42px; }
   .urunGaleriSerit button, .urunGaleriSerit button img { flex-basis: 60px; width: 60px; height: 60px; }
 }
+
+/* ------------------------------------------------------------------ *
+   KARGO ÜCRETİ VE MİNİMUM SİPARİŞ ADEDİ
+ * ------------------------------------------------------------------ */
+
+.fiyatKuto, .fiyatKutu { display: flex; flex-direction: column; gap: 2px; }
+.kargoNot { display: block; font-size: 11px; color: var(--muted); font-weight: 500; }
+.detailPrice .kargoNot { margin-top: 2px; }
+
+.minAdetSerit {
+  margin: 10px -18px -16px; padding: 9px 18px;
+  background: rgba(161, 93, 244, .1); border-top: 1px solid rgba(161, 93, 244, .22);
+  font-size: 11.5px; color: #cbb6f5;
+}
+.minAdetSerit b { color: #e2d4ff; }
+
+.minAdetKutu {
+  margin-top: 12px; padding: 11px 14px; border-radius: 11px;
+  background: rgba(161, 93, 244, .1); border: 1px solid rgba(161, 93, 244, .28);
+  font-size: 13px; color: #d8c8fb;
+}
+.minAdetKutu b { color: #efe7ff; }
+
+/* sepet ve sipariş formu dökümü */
+.cartOzet, .odemeDokum { display: flex; flex-direction: column; gap: 7px; width: 100%; }
+.odemeDokum {
+  margin: 4px 0 14px; padding: 14px 16px; border-radius: 12px;
+  background: rgba(255, 255, 255, .04); border: 1px solid var(--line);
+}
+.cartOzet > div, .odemeDokum > div { display: flex; justify-content: space-between; align-items: baseline; gap: 14px; }
+.cartOzet span, .odemeDokum span { font-size: 13px; color: var(--muted); }
+.cartOzet b, .odemeDokum b { font-size: 14px; color: var(--white); font-weight: 700; }
+.cartOzet b.bedava, .odemeDokum b.bedava { color: #86efac; }
+.cartOzet .genelToplam, .odemeDokum .genelToplam {
+  padding-top: 9px; margin-top: 2px; border-top: 1px solid var(--line);
+}
+.cartOzet .genelToplam span, .odemeDokum .genelToplam span { font-size: 14px; color: var(--white); font-weight: 600; }
+.cartOzet .genelToplam b, .odemeDokum .genelToplam b { font-size: 20px; letter-spacing: -.02em; }
+
+.kargoIpucu {
+  width: 100%; margin: 10px 0 2px; padding: 9px 13px; border-radius: 10px;
+  background: rgba(74, 222, 128, .1); border: 1px solid rgba(74, 222, 128, .26);
+  font-size: 12px; color: #a7f3c0; text-align: center;
+}

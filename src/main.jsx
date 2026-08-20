@@ -57,6 +57,9 @@ const money = value => new Intl.NumberFormat('tr-TR', {
   maximumFractionDigits: 0
 }).format(Number(value) || 0);
 
+/** Ürünün minimum sipariş adedi — tanımsız/bozuk değerlerde 1. */
+const minAdet = product => Math.max(1, Math.floor(Number(product?.minAdet) || 1));
+
 function configId(config) {
   const text = JSON.stringify(config);
   let hash = 2166136261;
@@ -167,12 +170,15 @@ function App() {
     price: '',
     stock: '',
     images: [],
+    minAdet: 1,
     description: ''
   });
   const [logoClicks, setLogoClicks] = useState([]);
   const [selectedImage, setSelectedImage] = useState(null);
   const [productDetail, setProductDetail] = useState(null);
   const [hukuk, setHukuk] = useState('');
+  // Kargo ücreti sunucudan okunur; sipariş toplamı yine sunucuda hesaplanır.
+  const [kargoAyar, setKargoAyar] = useState({ ucret: 0, bedavaEsik: 0, aktif: false });
   const firma = useMemo(() => firmaBilgisi(), []);
   // Son sipariş fişi — müşteri WhatsApp'a geçip dönmese bile ödeme
   // bilgilerini geri çağırabilsin diye saklanıyor.
@@ -211,6 +217,14 @@ function App() {
   }, [cart]);
 
   useEffect(() => {
+    // no-cache: her açılışta sunucuyla tazelik doğrulanır. Ekranda gösterilen
+    // kargo ücreti ile siparişte tahsil edilen tutar ayrışmamalı.
+    api('/api/ayarlar', { cache: 'no-cache' })
+      .then(data => { if (data?.kargo) setKargoAyar(data.kargo); })
+      .catch(() => { /* ayar okunamazsa kargo gösterilmez */ });
+  }, []);
+
+  useEffect(() => {
     api('/api/auth-me')
       .then(data => setAdmin(Boolean(data?.authenticated)))
       .catch(() => {});
@@ -238,7 +252,16 @@ function App() {
   }), [products, cat, query]);
 
   const featured = useMemo(() => products.filter(product => product.stock !== 0).slice(0, 3), [products]);
-  const total = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
+  const kargoNotu = kargoAyar.aktif ? `+ ${money(kargoAyar.ucret)} kargo` : '';
+  const araToplam = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
+  // Yalnızca gösterim: sunucu siparişte aynı kuralla yeniden hesaplar.
+  const kargoUcreti = !kargoAyar.aktif || !cart.length
+    ? 0
+    : (kargoAyar.bedavaEsik > 0 && araToplam >= kargoAyar.bedavaEsik ? 0 : kargoAyar.ucret);
+  const bedavaKargoyaKalan = kargoAyar.aktif && kargoAyar.bedavaEsik > 0
+    ? Math.max(0, kargoAyar.bedavaEsik - araToplam)
+    : 0;
+  const total = araToplam + kargoUcreti;
   const count = cart.reduce((sum, item) => sum + item.quantity, 0);
 
   function logoTap() {
@@ -254,6 +277,11 @@ function App() {
 
   function add(product) {
     if (product.stock === 0) return;
+    const enAz = minAdet(product);
+    // Stok minimumun altındaysa sipariş karşılanamaz; sepete hiç eklemiyoruz.
+    if (product.stock > 0 && product.stock < enAz) {
+      return bildir(`Bu üründen en az ${enAz} adet alınabiliyor, kalan stok ${product.stock}.`, 'hata');
+    }
     setCart(current => {
       const existing = current.find(item => item.product.id === product.id);
       if (existing) {
@@ -261,15 +289,22 @@ function App() {
           ? { ...item, quantity: Math.min(item.quantity + 1, product.stock || 99) }
           : item);
       }
-      return [...current, { product, quantity: 1 }];
+      return [...current, { product, quantity: enAz }];
     });
+    if (enAz > 1) bildir(`Bu ürün en az ${enAz} adet satılıyor; sepete ${enAz} adet eklendi.`, 'bilgi');
     setCartOpen(true);
   }
 
   function qty(id, delta) {
-    setCart(current => current.map(item => item.product.id === id
-      ? { ...item, quantity: Math.max(1, Math.min(item.product.stock || 99, item.quantity + delta)) }
-      : item));
+    setCart(current => current.map(item => {
+      if (item.product.id !== id) return item;
+      const enAz = minAdet(item.product);
+      const yeni = Math.max(enAz, Math.min(item.product.stock || 99, item.quantity + delta));
+      if (delta < 0 && item.quantity === enAz && enAz > 1) {
+        bildir(`"${item.product.name}" en az ${enAz} adet sipariş edilebiliyor.`, 'bilgi');
+      }
+      return { ...item, quantity: yeni };
+    }));
   }
 
   function remove(id) {
@@ -357,6 +392,7 @@ function App() {
         data.note ? `Not: ${data.note}` : '',
         '',
         ...data.items.map(item => `${item.name} x${item.quantity} — ${money(item.price * item.quantity)}`),
+        ...(Number(response.kargo) > 0 ? [`Kargo — ${money(response.kargo)}`] : []),
         '',
         `TOPLAM: ${money(confirmedTotal)}`,
         ...(odeme ? [
@@ -553,7 +589,7 @@ function App() {
 
   function newProduct() {
     setEdit(null);
-    setForm({ name: '', category: 'Figür & Oyuncak', price: '', stock: '', images: [], description: '' });
+    setForm({ name: '', category: 'Figür & Oyuncak', price: '', stock: '', images: [], minAdet: 1, description: '' });
   }
 
   function editProduct(product) {
@@ -564,6 +600,7 @@ function App() {
       price: product.price,
       stock: product.stock,
       images: product.images?.length ? product.images : (product.image ? [{ url: product.image, etiket: '' }] : []),
+      minAdet: minAdet(product),
       description: product.description || ''
     });
   }
@@ -571,7 +608,7 @@ function App() {
   async function saveProduct(event) {
     event.preventDefault();
     try {
-      const body = { ...form, price: Number(form.price), stock: Number(form.stock) };
+      const body = { ...form, price: Number(form.price), stock: Number(form.stock), minAdet: Math.max(1, Number(form.minAdet) || 1) };
       await api('/api/products', {
         method: edit ? 'PUT' : 'POST',
         body: JSON.stringify(edit ? { id: edit, ...body } : body)
@@ -746,7 +783,7 @@ function App() {
             {loading ? <SkeletonGrid adet={3} sinif="featuredGrid" /> : (
               <div className="featuredGrid">
                 {(featured.length ? featured : DEMO).map(product => (
-                  <ProductCard key={`featured-${product.id}`} product={product} onAdd={add} onDetail={setProductDetail} onImage={setSelectedImage} featured />
+                  <ProductCard key={`featured-${product.id}`} product={product} onAdd={add} onDetail={setProductDetail} onImage={setSelectedImage} kargoNotu={kargoNotu} featured />
                 ))}
               </div>
             )}
@@ -763,7 +800,7 @@ function App() {
             </div>
             {loading ? <SkeletonGrid adet={6} sinif="grid" /> : filtered.length ? (
               <div className="grid">
-                {filtered.map(product => <ProductCard key={product.id} product={product} onAdd={add} onDetail={setProductDetail} onImage={setSelectedImage} />)}
+                {filtered.map(product => <ProductCard key={product.id} product={product} onAdd={add} onDetail={setProductDetail} onImage={setSelectedImage} kargoNotu={kargoNotu} />)}
               </div>
             ) : <div className="empty">Aradığın ürünü bulamadık.</div>}
           </section>
@@ -836,7 +873,21 @@ function App() {
               <h2>{productDetail.name}</h2>
               <p>{productDetail.description}</p>
               <div className="detailFacts"><span>⏱ 2–5 iş günü*</span><span>⬡ PLA / PETG seçenekleri</span><span>🎨 Renk teyidi</span><span>📦 Güvenli paketleme</span></div>
-              <div className="detailPrice"><strong>{money(productDetail.price)}</strong><small>*Üretim süresi adet ve modele göre teyit edilir.</small></div>
+              <div className="detailPrice">
+                <strong>{money(productDetail.price)}</strong>
+                {kargoAyar.aktif && (
+                  <small className="kargoNot">
+                    {`+ ${money(kargoAyar.ucret)} kargo`}
+                    {kargoAyar.bedavaEsik > 0 && ` · ${money(kargoAyar.bedavaEsik)} üzeri bedava`}
+                  </small>
+                )}
+                <small>*Üretim süresi adet ve modele göre teyit edilir.</small>
+              </div>
+              {minAdet(productDetail) > 1 && (
+                <div className="minAdetKutu">
+                  Bu ürün en az <b>{minAdet(productDetail)} adet</b> sipariş edilebilir.
+                </div>
+              )}
               <button className="primary full" disabled={productDetail.stock === 0} onClick={() => { add(productDetail); setProductDetail(null); }}>{productDetail.stock === 0 ? 'Tükendi' : 'Sepete Ekle'}</button>
             </div>
           </div>
@@ -854,7 +905,28 @@ function App() {
               </div>
             )) : <div className="empty">Sepetin boş.</div>}
           </div>
-          {cart.length > 0 && <div className="cartTotal"><span>Toplam</span><strong>{money(total)}</strong><button className="primary full" onClick={() => { setCartOpen(false); setCheckout(true); }}>Sipariş Bilgilerini Gir</button></div>}
+          {cart.length > 0 && (
+            <div className="cartTotal">
+              <div className="cartOzet">
+                <div><span>Ara toplam</span><b>{money(araToplam)}</b></div>
+                {kargoAyar.aktif && (
+                  <div>
+                    <span>Kargo</span>
+                    <b className={kargoUcreti === 0 ? 'bedava' : undefined}>
+                      {kargoUcreti === 0 ? 'Bedava' : money(kargoUcreti)}
+                    </b>
+                  </div>
+                )}
+                <div className="genelToplam"><span>Toplam</span><b>{money(total)}</b></div>
+              </div>
+              {bedavaKargoyaKalan > 0 && (
+                <div className="kargoIpucu">
+                  {money(bedavaKargoyaKalan)} daha eklersen kargo bedava.
+                </div>
+              )}
+              <button className="primary full" onClick={() => { setCartOpen(false); setCheckout(true); }}>Sipariş Bilgilerini Gir</button>
+            </div>
+          )}
         </Modal>
       )}
 
@@ -869,6 +941,16 @@ function App() {
             <label className="consent"><input type="checkbox" required /> <span><a href="#" onClick={event => { event.preventDefault(); setHukuk('mesafeli'); }}>Mesafeli Satış Sözleşmesi</a>, <a href="#" onClick={event => { event.preventDefault(); setHukuk('iade'); }}>İptal ve İade Koşulları</a> ve <a href="#" onClick={event => { event.preventDefault(); setHukuk('kvkk'); }}>KVKK Aydınlatma Metni</a>'ni okudum, kabul ediyorum.</span></label>
             <div className="notice">Sipariş önce sisteme kaydedilir ve size benzersiz bir sipariş numarası verilir. Ödeme bilgileri sipariş fişinde görünür.</div>
             <div className="notice uyari">Kişiye özel üretilen ürünlerde, üretim başladıktan sonra cayma hakkı kullanılamaz (Mesafeli Sözleşmeler Yönetmeliği m.15/1-b). Üretim başlamadan önce siparişini ücretsiz iptal edebilirsin.</div>
+            <div className="odemeDokum">
+              <div><span>Ara toplam</span><b>{money(araToplam)}</b></div>
+              {kargoAyar.aktif && (
+                <div>
+                  <span>Kargo</span>
+                  <b className={kargoUcreti === 0 ? 'bedava' : undefined}>{kargoUcreti === 0 ? 'Bedava' : money(kargoUcreti)}</b>
+                </div>
+              )}
+              <div className="genelToplam"><span>Ödenecek tutar</span><b>{money(total)}</b></div>
+            </div>
             <button className="primary full" disabled={submittingOrder}>{submittingOrder ? 'Kaydediliyor...' : `Siparişi Oluştur — ${money(total)}`}</button>
             <small className="channelHint">Bir sonraki adımda ödeme bilgilerini göreceksin. Sipariş, sen bildirmeden de sistemimize kaydedilir.</small>
           </form>
@@ -1197,7 +1279,8 @@ function TrustStrip() {
   return <section className="wrap trustStrip">{items.map(([icon, title, text]) => <div className="trustItem" key={title}><i>{icon}</i><div><b>{title}</b><span>{text}</span></div></div>)}</section>;
 }
 
-function ProductCard({ product, onAdd, onDetail, onImage, featured = false }) {
+function ProductCard({ product, onAdd, onDetail, onImage, featured = false, kargoNotu = '' }) {
+  const enAz = minAdet(product);
   const gorseller = product.images?.length ? product.images : [{ url: product.image || '/logo-hero.webp', etiket: '' }];
   const kapak = gorseller[0];
   const galeri = { images: gorseller, index: 0, name: product.name };
@@ -1225,7 +1308,17 @@ function ProductCard({ product, onAdd, onDetail, onImage, featured = false }) {
         <h3>{product.name}</h3>
         <p>{product.description}</p>
         <div className="productMeta"><span>⏱ 2–5 iş günü*</span><span>⬡ Siparişe göre üretim</span></div>
-        <div className="cardBottom"><strong>{money(product.price)}</strong><div><button className="detailBtn" onClick={() => onDetail(product)}>İncele</button><button onClick={() => onAdd(product)} disabled={product.stock === 0}>{product.stock === 0 ? 'Tükendi' : 'Sepete Ekle'}</button></div></div>
+        <div className="cardBottom">
+          <div className="fiyatKutu">
+            <strong>{money(product.price)}</strong>
+            {kargoNotu && <small className="kargoNot">{kargoNotu}</small>}
+          </div>
+          <div>
+            <button className="detailBtn" onClick={() => onDetail(product)}>İncele</button>
+            <button onClick={() => onAdd(product)} disabled={product.stock === 0}>{product.stock === 0 ? 'Tükendi' : 'Sepete Ekle'}</button>
+          </div>
+        </div>
+        {enAz > 1 && <div className="minAdetSerit">Bu ürün en az <b>{enAz} adet</b> sipariş edilebilir.</div>}
         <small>{product.stock > 0 ? `Mevcut stok: ${product.stock}` : 'Stokta yok'} · *Tahmini süre</small>
       </div>
     </article>
@@ -1457,8 +1550,8 @@ function AdminPanel({ stats, orders, customOrders, odeme, products, form, setFor
       ].map(item => <div className="stat" key={item[0]}><span>{item[2]}</span><small>{item[0]}</small><b>{item[1]}</b></div>)}</div>
 
       <div className="adminGrid">
-        <section className="panel"><div className="panelHead"><div><b>Ürün Yönetimi</b><span>Google Sheets ile senkron</span></div><button className="primary" onClick={newProduct}>+ Yeni Ürün</button></div><div className="productAdmin">{products.map(product => <div className="pRow" key={product.id}><img src={product.image || '/logo-mark.webp'} alt="" /><div><b>{product.name}</b><span>{product.category} · {money(product.price)} · Stok {product.stock}{product.images?.length > 1 ? ` · ${product.images.length} görsel` : ''}</span></div><button onClick={() => editProduct(product)}>Düzenle</button><button className="danger" onClick={() => delProduct(product.id)}>Sil</button></div>)}</div></section>
-        <section className="panel editor"><div className="panelHead"><div><b>{edit ? 'Ürünü Düzenle' : 'Yeni Ürün'}</b><span>Bilgileri girip kaydet</span></div></div><form className="form" onSubmit={saveProduct}><Field label="Ürün adı *" value={form.name} onChange={event => setForm({ ...form, name: event.target.value })} required /><label>Kategori<select value={form.category} onChange={event => setForm({ ...form, category: event.target.value })}>{CATS.filter(item => item !== 'Tümü').map(category => <option key={category}>{category}</option>)}</select></label><div className="two"><Field label="Fiyat (TL) *" type="number" min="0" value={form.price} onChange={event => setForm({ ...form, price: event.target.value })} required /><Field label="Stok *" type="number" min="0" value={form.stock} onChange={event => setForm({ ...form, stock: event.target.value })} required /></div><label>Ürün Görselleri <span className="muted">(her renk seçeneği için bir fotoğraf — ilk sıradaki kapak olur)</span><input type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={uploadImage} /></label>{imageUploading && <div className="notice">{uploadDurum || 'Görsel yükleniyor…'}</div>}<GorselYonetici images={form.images || []} setImages={liste => setForm({ ...form, images: liste })} /><label>Açıklama<textarea rows="4" value={form.description} onChange={event => setForm({ ...form, description: event.target.value })} /></label><div className="two"><button className="primary">{edit ? 'Değişiklikleri Kaydet' : 'Ürünü Yayınla'}</button><button type="button" className="ghost" onClick={newProduct}>Temizle</button></div></form></section>
+        <section className="panel"><div className="panelHead"><div><b>Ürün Yönetimi</b><span>Google Sheets ile senkron</span></div><button className="primary" onClick={newProduct}>+ Yeni Ürün</button></div><div className="productAdmin">{products.map(product => <div className="pRow" key={product.id}><img src={product.image || '/logo-mark.webp'} alt="" /><div><b>{product.name}</b><span>{product.category} · {money(product.price)} · Stok {product.stock}{product.images?.length > 1 ? ` · ${product.images.length} görsel` : ''}{minAdet(product) > 1 ? ` · min ${minAdet(product)} adet` : ''}</span></div><button onClick={() => editProduct(product)}>Düzenle</button><button className="danger" onClick={() => delProduct(product.id)}>Sil</button></div>)}</div></section>
+        <section className="panel editor"><div className="panelHead"><div><b>{edit ? 'Ürünü Düzenle' : 'Yeni Ürün'}</b><span>Bilgileri girip kaydet</span></div></div><form className="form" onSubmit={saveProduct}><Field label="Ürün adı *" value={form.name} onChange={event => setForm({ ...form, name: event.target.value })} required /><label>Kategori<select value={form.category} onChange={event => setForm({ ...form, category: event.target.value })}>{CATS.filter(item => item !== 'Tümü').map(category => <option key={category}>{category}</option>)}</select></label><div className="two"><Field label="Fiyat (TL) *" type="number" min="0" value={form.price} onChange={event => setForm({ ...form, price: event.target.value })} required /><Field label="Stok *" type="number" min="0" value={form.stock} onChange={event => setForm({ ...form, stock: event.target.value })} required /></div><label>Minimum sipariş adedi <span className="muted">(müşteri bu üründen en az kaç adet almalı — 1 = sınır yok)</span><input type="number" min="1" max="999" value={form.minAdet ?? 1} onChange={event => setForm({ ...form, minAdet: event.target.value })} /></label><label>Ürün Görselleri <span className="muted">(her renk seçeneği için bir fotoğraf — ilk sıradaki kapak olur)</span><input type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={uploadImage} /></label>{imageUploading && <div className="notice">{uploadDurum || 'Görsel yükleniyor…'}</div>}<GorselYonetici images={form.images || []} setImages={liste => setForm({ ...form, images: liste })} /><label>Açıklama<textarea rows="4" value={form.description} onChange={event => setForm({ ...form, description: event.target.value })} /></label><div className="two"><button className="primary">{edit ? 'Değişiklikleri Kaydet' : 'Ürünü Yayınla'}</button><button type="button" className="ghost" onClick={newProduct}>Temizle</button></div></form></section>
       </div>
 
       <section className="panel orders"><div className="panelHead"><div><b>Sipariş Yönetimi</b><span>Durumu değiştirdiğinizde müşteriye otomatik bildirim gönderilir · sipariş tasarımları baskıya hazır STL olarak indirilir</span></div></div><div className="tableWrap"><table><thead><tr><th>Sipariş</th><th>Müşteri</th><th>Ürünler</th><th>Tutar</th><th>Durum</th><th>İşlem</th></tr></thead><tbody>{orders.length ? orders.map(order => <tr key={order.orderNo}><td><b>{order.orderNo}</b><small>{new Date(order.date).toLocaleString('tr-TR')}</small></td><td><b>{order.name}</b><small>{order.phone}</small>{order.email && <small>{order.email}</small>}<small>{order.address}</small></td><td>{order.items}{order.configurations?.length > 0 && <small className="productionBadge">◈ {order.configurations.length} STL üretime hazır</small>}</td><td><b>{money(order.total)}</b>{ODEME_BEKLEYEN.includes(order.status) && <small className="odemeBekliyor">Ödeme bekliyor</small>}</td><td><select className="statusSelect" value={order.status} onChange={event => updateOrder(order, event.target.value)}>{ORDER_STATUSES.map(status => <option key={status}>{status}</option>)}</select><small>Değişiklikte bildirim gider</small></td><td><div className="orderActions">{order.configurations?.map((configuration, index) => { const key = `${order.orderNo}-${index}`; return <div className="stlGrup" key={key}><button className="productionBtn" disabled={Boolean(stlLoading)} onClick={() => downloadAbajurProduction(order, configuration, index)}>{stlLoading === key ? 'STL hazırlanıyor…' : `⬇ Abajur ${index + 1} · Baskıya Hazır STL`}</button><button className="isEmriBtn" disabled={Boolean(stlLoading)} onClick={() => showIsEmri(order, index)}>{stlLoading === `rapor-${order.orderNo}-${index}` ? 'Hazırlanıyor…' : '⚙ İş emri'}</button></div>; })}{ODEME_BEKLEYEN.includes(order.status) && <button className="odemeBtn" onClick={() => odemeBilgisiGonder(order)}>₺ Ödeme bilgisi gönder</button>}<button className="shipBtn" onClick={() => notifyOrder(order)}>Müşteriye WhatsApp aç</button></div></td></tr>) : <tr><td colSpan="6" className="empty">Henüz sipariş yok.</td></tr>}</tbody></table></div></section>

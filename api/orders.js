@@ -4,6 +4,8 @@ import { enforceRateLimit, setRateLimitResponse } from '../lib/rate-limit.js';
 import { quoteAbajur } from '../lib/abajur.js';
 import { sendOrderStatusNotification } from '../lib/notifications.js';
 import { odemeTalimati } from '../lib/odeme.js';
+import { kargoHesapla } from '../lib/kargo.js';
+import { dogrulaKatalogKalemi } from '../lib/siparis-dogrula.js';
 
 function cleanText(value, max = 500) {
   return String(value || '').trim().slice(0, max);
@@ -43,9 +45,8 @@ export default async function handler(req, res) {
           };
         }
         const product = currentProducts.find(candidate => candidate.id === item.id);
-        if (currentProducts.length && !product) throw new Error('ÜRÜN_BULUNAMADI');
-        if (product && product.stock === 0) throw new Error('STOK_YOK');
-        if (product && product.stock > 0 && quantity > product.stock) throw new Error('STOK_YETERSİZ');
+        // Stok, minimum adet ve ürünün varlığı ürünün güncel kaydından doğrulanır.
+        dogrulaKatalogKalemi(product, quantity, currentProducts.length > 0);
         return {
           id: product?.id || cleanText(item.id, 100),
           name: product?.name || cleanText(item.name, 180),
@@ -53,9 +54,12 @@ export default async function handler(req, res) {
           price: Number(product?.price ?? item.price ?? 0)
         };
       });
-      const total = validatedItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+      const araToplam = validatedItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+      // Kargo bedeli sunucuda hesaplanır; istemciden gelen değer kullanılmaz.
+      const kargo = kargoHesapla(araToplam);
+      const total = araToplam + kargo;
       const orderNo = `UM-${Date.now().toString(36).toUpperCase()}`;
-      await appendOrder({ orderNo, name, phone, email, address, note, items: validatedItems, total });
+      await appendOrder({ orderNo, name, phone, email, address, note, items: validatedItems, total, kargo });
       // Ödeme talimatı sipariş yanıtıyla dönüyor: müşteri fişi kapatmadan
       // IBAN'ı ve açıklamaya yazacağı sipariş numarasını görür. IBAN yalnızca
       // sipariş verildikten sonra döndüğü için ortalıkta durmuyor.
@@ -63,7 +67,7 @@ export default async function handler(req, res) {
       // yönlendirebilir. Böyle bir durumda ödeme kartı hiç gösterilmez;
       // yönetici paneli bunu uyarı olarak öne çıkarır.
       const odeme = odemeTalimati({ orderNo, total });
-      return res.json({ ok: true, orderNo, total, odeme: odeme?.gecerli ? odeme : null });
+      return res.json({ ok: true, orderNo, araToplam, kargo, total, odeme: odeme?.gecerli ? odeme : null });
     }
 
     if (req.method === 'PUT') {
@@ -85,6 +89,7 @@ export default async function handler(req, res) {
     if (error.message === 'ÜRÜN_BULUNAMADI') return res.status(400).json({ error: 'Sepetteki ürünlerden biri artık satışta değil.' });
     if (error.message === 'STOK_YOK') return res.status(400).json({ error: 'Sepetteki ürünlerden biri tükendi.' });
     if (error.message === 'STOK_YETERSİZ') return res.status(400).json({ error: 'Sepetteki ürünlerden birinin stoğu yetersiz.' });
+    if (error.message === 'MIN_ADET') return res.status(400).json({ error: error.detay || 'Minimum sipariş adedinin altında kalıyorsun.' });
     if (error.message === 'ABAJUR_SIGMIYOR') return res.status(400).json({ error: 'Abajur ölçüleri üretim tablasına sığmıyor.' });
     return res.status(500).json({ error: error.message || 'Sipariş işlemi başarısız.' });
   }
