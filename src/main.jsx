@@ -12,6 +12,8 @@ const AbajurKonfigurator = lazy(() => import('./components/AbajurKonfigurator.js
 const SITE_OPEN = import.meta.env.VITE_SITE_OPEN !== 'false';
 const SEPET_ANAHTAR = 'umera.sepet.v2';
 const SON_SIPARIS_ANAHTAR = 'umera.sonSiparis.v1';
+// Ürün başına görsel sınırı — lib/sheets.js içindeki MAKS_GORSEL ile aynı.
+const MAKS_URUN_GORSELI = 12;
 
 const WA = import.meta.env.VITE_WHATSAPP_NUMBER || '';
 const EMAIL = import.meta.env.VITE_COMPANY_EMAIL || 'siparis@umeradesign3d.com';
@@ -164,7 +166,7 @@ function App() {
     category: 'Figür & Oyuncak',
     price: '',
     stock: '',
-    image: '',
+    images: [],
     description: ''
   });
   const [logoClicks, setLogoClicks] = useState([]);
@@ -551,7 +553,7 @@ function App() {
 
   function newProduct() {
     setEdit(null);
-    setForm({ name: '', category: 'Figür & Oyuncak', price: '', stock: '', image: '', description: '' });
+    setForm({ name: '', category: 'Figür & Oyuncak', price: '', stock: '', images: [], description: '' });
   }
 
   function editProduct(product) {
@@ -561,7 +563,7 @@ function App() {
       category: product.category,
       price: product.price,
       stock: product.stock,
-      image: product.image,
+      images: product.images?.length ? product.images : (product.image ? [{ url: product.image, etiket: '' }] : []),
       description: product.description || ''
     });
   }
@@ -592,30 +594,55 @@ function App() {
     }
   }
 
+  /** Birden fazla görsel yükler; her biri renk/varyant etiketi alabilir. */
   async function uploadImage(event) {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+    const files = Array.from(event.target.files || []);
+    if (!files.length) return;
+
+    const bosluk = MAKS_URUN_GORSELI - (form.images?.length || 0);
+    if (bosluk <= 0) {
+      event.target.value = '';
+      return bildir(`En fazla ${MAKS_URUN_GORSELI} görsel ekleyebilirsin.`, 'hata');
+    }
+    const secilen = files.slice(0, bosluk);
+    if (files.length > bosluk) {
+      bildir(`İlk ${bosluk} görsel alındı; sınır ${MAKS_URUN_GORSELI}.`, 'bilgi');
+    }
+
+    const gecersiz = secilen.find(f => !['image/jpeg', 'image/png', 'image/webp'].includes(f.type));
+    if (gecersiz) {
+      event.target.value = '';
       return bildir('JPG, PNG veya WEBP görsel seç.', 'hata');
     }
 
     setImageUploading(true);
+    let toplamOnce = 0;
+    let toplamSonra = 0;
     try {
-      const hazir = await sikistir(file, { maksKenar: 1600, hedefBayt: 600_000 });
-      const response = await api('/api/upload', {
-        method: 'POST',
-        body: JSON.stringify({ name: hazir.name, type: hazir.type, data: hazir.dataUrl })
-      });
-      setForm(current => ({ ...current, image: response.url }));
+      for (const [sira, file] of secilen.entries()) {
+        setUploadDurum(`Görsel ${sira + 1}/${secilen.length} yükleniyor…`);
+        const hazir = await sikistir(file, { maksKenar: 1600, hedefBayt: 600_000 });
+        const response = await api('/api/upload', {
+          method: 'POST',
+          body: JSON.stringify({ name: hazir.name, type: hazir.type, data: hazir.dataUrl })
+        });
+        toplamOnce += hazir.oncekiBayt;
+        toplamSonra += hazir.sonrakiBayt;
+        setForm(current => ({
+          ...current,
+          images: [...(current.images || []), { url: response.url, etiket: '' }]
+        }));
+      }
       bildir(
-        hazir.sonrakiBayt < hazir.oncekiBayt
-          ? `Görsel yüklendi (${boyutYazisi(hazir.oncekiBayt)} → ${boyutYazisi(hazir.sonrakiBayt)}).`
-          : 'Görsel yüklendi.',
+        toplamSonra < toplamOnce
+          ? `${secilen.length} görsel yüklendi (${boyutYazisi(toplamOnce)} → ${boyutYazisi(toplamSonra)}).`
+          : `${secilen.length} görsel yüklendi.`,
         'basari'
       );
     } catch (error) {
       bildir(error.message, 'hata');
     } finally {
+      setUploadDurum('');
       setImageUploading(false);
       event.target.value = '';
     }
@@ -770,6 +797,7 @@ function App() {
           delProduct={delProduct}
           uploadImage={uploadImage}
           imageUploading={imageUploading}
+          uploadDurum={uploadDurum}
           loadDashboard={loadDashboard}
           logout={logout}
           updateOrder={updateOrder}
@@ -797,12 +825,12 @@ function App() {
 
       {hukuk && <HukukModal acikId={hukuk} close={() => setHukuk('')} />}
 
-      {selectedImage && <ImageLightbox image={selectedImage} close={() => setSelectedImage(null)} />}
+      {selectedImage && <ImageLightbox galeri={selectedImage} close={() => setSelectedImage(null)} />}
 
       {productDetail && (
         <Modal title="Ürün Detayı" close={() => setProductDetail(null)} wide>
           <div className="productDetail">
-            <img src={productDetail.image || '/logo-hero.webp'} alt={productDetail.name} />
+            <UrunGalerisi urun={productDetail} onBuyut={setSelectedImage} />
             <div>
               <span className="productCategory">{productDetail.category}</span>
               <h2>{productDetail.name}</h2>
@@ -1053,6 +1081,91 @@ function HukukModal({ acikId, close }) {
   );
 }
 
+/** Ürün detayında büyük görsel + renk/varyant şeridi. */
+function UrunGalerisi({ urun, onBuyut }) {
+  const gorseller = urun.images?.length ? urun.images : [{ url: urun.image || '/logo-hero.webp', etiket: '' }];
+  const [sira, setSira] = useState(0);
+  const aktif = gorseller[Math.min(sira, gorseller.length - 1)];
+
+  return (
+    <div className="urunGaleri">
+      <button
+        type="button"
+        className="urunGaleriAna"
+        onClick={() => onBuyut({ images: gorseller, index: sira, name: urun.name })}
+        aria-label="Görseli büyüt"
+      >
+        <img src={aktif.url} alt={aktif.etiket || urun.name} />
+        {aktif.etiket && <span className="galeriEtiket">{aktif.etiket}</span>}
+      </button>
+      {gorseller.length > 1 && (
+        <div className="urunGaleriSerit">
+          {gorseller.map((g, i) => (
+            <button
+              type="button"
+              key={g.url + i}
+              className={i === sira ? 'aktif' : ''}
+              onClick={() => setSira(i)}
+              title={g.etiket || `Görsel ${i + 1}`}
+            >
+              <img src={g.url} alt="" />
+              {g.etiket && <b>{g.etiket}</b>}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Yönetici: görselleri sırala, etiketle, sil. İlk sıradaki kapak olur. */
+function GorselYonetici({ images, setImages }) {
+  if (!images.length) {
+    return (
+      <div className="galeriBos">
+        Henüz görsel yok. Her renk seçeneği için bir fotoğraf yükleyebilirsin — birden fazla dosya seçebilirsin.
+      </div>
+    );
+  }
+
+  const tasi = (i, yon) => {
+    const hedef = i + yon;
+    if (hedef < 0 || hedef >= images.length) return;
+    const yeni = images.slice();
+    [yeni[i], yeni[hedef]] = [yeni[hedef], yeni[i]];
+    setImages(yeni);
+  };
+
+  return (
+    <div className="galeriDuzen">
+      {images.map((g, i) => (
+        <div className={i === 0 ? 'galeriOge kapak' : 'galeriOge'} key={g.url + i}>
+          <div className="galeriOnizleme">
+            <img src={g.url} alt="" />
+            {i === 0 && <span className="kapakRozet">Kapak</span>}
+          </div>
+          <input
+            value={g.etiket || ''}
+            placeholder="Renk / varyant"
+            maxLength={60}
+            aria-label={`Görsel ${i + 1} etiketi`}
+            onChange={event => {
+              const yeni = images.slice();
+              yeni[i] = { ...yeni[i], etiket: event.target.value };
+              setImages(yeni);
+            }}
+          />
+          <div className="galeriAksiyon">
+            <button type="button" disabled={i === 0} onClick={() => tasi(i, -1)} aria-label="Sola al">←</button>
+            <button type="button" disabled={i === images.length - 1} onClick={() => tasi(i, 1)} aria-label="Sağa al">→</button>
+            <button type="button" className="sil" onClick={() => setImages(images.filter((_, j) => j !== i))}>Sil</button>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function SkeletonGrid({ adet = 6, sinif = 'grid' }) {
   return (
     <div className={sinif} aria-hidden="true">
@@ -1085,10 +1198,26 @@ function TrustStrip() {
 }
 
 function ProductCard({ product, onAdd, onDetail, onImage, featured = false }) {
+  const gorseller = product.images?.length ? product.images : [{ url: product.image || '/logo-hero.webp', etiket: '' }];
+  const kapak = gorseller[0];
+  const galeri = { images: gorseller, index: 0, name: product.name };
   return (
     <article className={featured ? 'card featuredCard' : 'card'}>
       <div className="pic">
-        <img src={product.image || '/logo-hero.webp'} alt={product.name} loading={featured ? 'eager' : 'lazy'} onClick={() => onImage({ url: product.image || '/logo-hero.webp', name: product.name })} role="button" tabIndex="0" onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') onImage({ url: product.image || '/logo-hero.webp', name: product.name }); }} />
+        <img
+          src={kapak.url}
+          alt={product.name}
+          loading={featured ? 'eager' : 'lazy'}
+          onClick={() => onImage(galeri)}
+          role="button"
+          tabIndex="0"
+          onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') onImage(galeri); }}
+        />
+        {gorseller.length > 1 && (
+          <b className="varyantRozet" title={gorseller.map(g => g.etiket).filter(Boolean).join(', ')}>
+            {gorseller.length} seçenek
+          </b>
+        )}
         <span>{product.category}</span>
         {product.stock === 0 && <b className="sold">Tükendi</b>}
       </div>
@@ -1124,8 +1253,49 @@ function FAQSection() {
   return <section className="wrap faqSection"><SectionTitle eyebrow="SIK SORULAN SORULAR" title={<>Siparişten önce <em>merak edilenler.</em></>} /><div className="faqGrid">{faqs.map(([question, answer]) => <details key={question}><summary>{question}<span>+</span></summary><p>{answer}</p></details>)}</div></section>;
 }
 
-function ImageLightbox({ image, close }) {
-  return <div className="imageLightbox" onClick={close} role="dialog" aria-modal="true" aria-label="Ürün görseli"><button className="imageLightboxClose" onClick={close} aria-label="Kapat">×</button><img src={image.url} alt={image.name} onClick={event => event.stopPropagation()} /><div className="imageLightboxCaption">{image.name}</div></div>;
+/** Ürün görsellerini tam ekran gösterir; birden fazlaysa ok tuşlarıyla gezilir. */
+function ImageLightbox({ galeri, close }) {
+  const gorseller = galeri.images?.length ? galeri.images : [{ url: galeri.url, etiket: '' }];
+  const [sira, setSira] = useState(Math.min(galeri.index || 0, gorseller.length - 1));
+  const coklu = gorseller.length > 1;
+
+  useEffect(() => {
+    if (!coklu) return;
+    const tus = event => {
+      if (event.key === 'ArrowRight') setSira(i => (i + 1) % gorseller.length);
+      if (event.key === 'ArrowLeft') setSira(i => (i - 1 + gorseller.length) % gorseller.length);
+    };
+    window.addEventListener('keydown', tus);
+    return () => window.removeEventListener('keydown', tus);
+  }, [coklu, gorseller.length]);
+
+  const aktif = gorseller[sira] || gorseller[0];
+
+  return (
+    <div className="imageLightbox" onClick={close} role="dialog" aria-modal="true" aria-label="Ürün görseli">
+      <button className="imageLightboxClose" onClick={close} aria-label="Kapat">×</button>
+      {coklu && (
+        <button className="lightboxOk sol" aria-label="Önceki görsel" onClick={event => { event.stopPropagation(); setSira(i => (i - 1 + gorseller.length) % gorseller.length); }}>‹</button>
+      )}
+      <img src={aktif.url} alt={aktif.etiket || galeri.name} onClick={event => event.stopPropagation()} />
+      {coklu && (
+        <button className="lightboxOk sag" aria-label="Sonraki görsel" onClick={event => { event.stopPropagation(); setSira(i => (i + 1) % gorseller.length); }}>›</button>
+      )}
+      <div className="imageLightboxCaption">
+        <span>{aktif.etiket ? `${galeri.name} — ${aktif.etiket}` : galeri.name}</span>
+        {coklu && <small>{sira + 1} / {gorseller.length}</small>}
+      </div>
+      {coklu && (
+        <div className="lightboxSerit" onClick={event => event.stopPropagation()}>
+          {gorseller.map((g, i) => (
+            <button key={g.url + i} className={i === sira ? 'aktif' : ''} onClick={() => setSira(i)} title={g.etiket || `Görsel ${i + 1}`}>
+              <img src={g.url} alt="" />
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 function Field({ label, name, ...props }) {
@@ -1136,7 +1306,7 @@ function Modal({ title, close, children, wide = false }) {
   return <div className="modalBack" onMouseDown={event => { if (event.target === event.currentTarget) close(); }}><div className={wide ? 'modal wide' : 'modal'}><div className="modalHead"><h3>{title}</h3><button type="button" onClick={close} aria-label="Kapat">×</button></div>{children}</div></div>;
 }
 
-function AdminPanel({ stats, orders, customOrders, odeme, products, form, setForm, edit, newProduct, editProduct, saveProduct, delProduct, uploadImage, imageUploading, loadDashboard, logout, updateOrder, notifyOrder }) {
+function AdminPanel({ stats, orders, customOrders, odeme, products, form, setForm, edit, newProduct, editProduct, saveProduct, delProduct, uploadImage, imageUploading, uploadDurum, loadDashboard, logout, updateOrder, notifyOrder }) {
   const [customFilter, setCustomFilter] = useState('Tümü');
   const [selectedCustom, setSelectedCustom] = useState(null);
   const [stlLoading, setStlLoading] = useState('');
@@ -1287,8 +1457,8 @@ function AdminPanel({ stats, orders, customOrders, odeme, products, form, setFor
       ].map(item => <div className="stat" key={item[0]}><span>{item[2]}</span><small>{item[0]}</small><b>{item[1]}</b></div>)}</div>
 
       <div className="adminGrid">
-        <section className="panel"><div className="panelHead"><div><b>Ürün Yönetimi</b><span>Google Sheets ile senkron</span></div><button className="primary" onClick={newProduct}>+ Yeni Ürün</button></div><div className="productAdmin">{products.map(product => <div className="pRow" key={product.id}><img src={product.image || '/logo-mark.webp'} alt="" /><div><b>{product.name}</b><span>{product.category} · {money(product.price)} · Stok {product.stock}</span></div><button onClick={() => editProduct(product)}>Düzenle</button><button className="danger" onClick={() => delProduct(product.id)}>Sil</button></div>)}</div></section>
-        <section className="panel editor"><div className="panelHead"><div><b>{edit ? 'Ürünü Düzenle' : 'Yeni Ürün'}</b><span>Bilgileri girip kaydet</span></div></div><form className="form" onSubmit={saveProduct}><Field label="Ürün adı *" value={form.name} onChange={event => setForm({ ...form, name: event.target.value })} required /><label>Kategori<select value={form.category} onChange={event => setForm({ ...form, category: event.target.value })}>{CATS.filter(item => item !== 'Tümü').map(category => <option key={category}>{category}</option>)}</select></label><div className="two"><Field label="Fiyat (TL) *" type="number" min="0" value={form.price} onChange={event => setForm({ ...form, price: event.target.value })} required /><Field label="Stok *" type="number" min="0" value={form.stock} onChange={event => setForm({ ...form, stock: event.target.value })} required /></div><label>Ürün Görseli<input type="file" accept="image/jpeg,image/png,image/webp" onChange={uploadImage} /></label>{imageUploading && <div className="notice">Görsel yükleniyor...</div>}{form.image && <img className="preview" src={form.image} alt="Önizleme" />}<Field label="Görsel URL (opsiyonel)" value={form.image} onChange={event => setForm({ ...form, image: event.target.value })} /><label>Açıklama<textarea rows="4" value={form.description} onChange={event => setForm({ ...form, description: event.target.value })} /></label><div className="two"><button className="primary">{edit ? 'Değişiklikleri Kaydet' : 'Ürünü Yayınla'}</button><button type="button" className="ghost" onClick={newProduct}>Temizle</button></div></form></section>
+        <section className="panel"><div className="panelHead"><div><b>Ürün Yönetimi</b><span>Google Sheets ile senkron</span></div><button className="primary" onClick={newProduct}>+ Yeni Ürün</button></div><div className="productAdmin">{products.map(product => <div className="pRow" key={product.id}><img src={product.image || '/logo-mark.webp'} alt="" /><div><b>{product.name}</b><span>{product.category} · {money(product.price)} · Stok {product.stock}{product.images?.length > 1 ? ` · ${product.images.length} görsel` : ''}</span></div><button onClick={() => editProduct(product)}>Düzenle</button><button className="danger" onClick={() => delProduct(product.id)}>Sil</button></div>)}</div></section>
+        <section className="panel editor"><div className="panelHead"><div><b>{edit ? 'Ürünü Düzenle' : 'Yeni Ürün'}</b><span>Bilgileri girip kaydet</span></div></div><form className="form" onSubmit={saveProduct}><Field label="Ürün adı *" value={form.name} onChange={event => setForm({ ...form, name: event.target.value })} required /><label>Kategori<select value={form.category} onChange={event => setForm({ ...form, category: event.target.value })}>{CATS.filter(item => item !== 'Tümü').map(category => <option key={category}>{category}</option>)}</select></label><div className="two"><Field label="Fiyat (TL) *" type="number" min="0" value={form.price} onChange={event => setForm({ ...form, price: event.target.value })} required /><Field label="Stok *" type="number" min="0" value={form.stock} onChange={event => setForm({ ...form, stock: event.target.value })} required /></div><label>Ürün Görselleri <span className="muted">(her renk seçeneği için bir fotoğraf — ilk sıradaki kapak olur)</span><input type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={uploadImage} /></label>{imageUploading && <div className="notice">{uploadDurum || 'Görsel yükleniyor…'}</div>}<GorselYonetici images={form.images || []} setImages={liste => setForm({ ...form, images: liste })} /><label>Açıklama<textarea rows="4" value={form.description} onChange={event => setForm({ ...form, description: event.target.value })} /></label><div className="two"><button className="primary">{edit ? 'Değişiklikleri Kaydet' : 'Ürünü Yayınla'}</button><button type="button" className="ghost" onClick={newProduct}>Temizle</button></div></form></section>
       </div>
 
       <section className="panel orders"><div className="panelHead"><div><b>Sipariş Yönetimi</b><span>Durumu değiştirdiğinizde müşteriye otomatik bildirim gönderilir · sipariş tasarımları baskıya hazır STL olarak indirilir</span></div></div><div className="tableWrap"><table><thead><tr><th>Sipariş</th><th>Müşteri</th><th>Ürünler</th><th>Tutar</th><th>Durum</th><th>İşlem</th></tr></thead><tbody>{orders.length ? orders.map(order => <tr key={order.orderNo}><td><b>{order.orderNo}</b><small>{new Date(order.date).toLocaleString('tr-TR')}</small></td><td><b>{order.name}</b><small>{order.phone}</small>{order.email && <small>{order.email}</small>}<small>{order.address}</small></td><td>{order.items}{order.configurations?.length > 0 && <small className="productionBadge">◈ {order.configurations.length} STL üretime hazır</small>}</td><td><b>{money(order.total)}</b>{ODEME_BEKLEYEN.includes(order.status) && <small className="odemeBekliyor">Ödeme bekliyor</small>}</td><td><select className="statusSelect" value={order.status} onChange={event => updateOrder(order, event.target.value)}>{ORDER_STATUSES.map(status => <option key={status}>{status}</option>)}</select><small>Değişiklikte bildirim gider</small></td><td><div className="orderActions">{order.configurations?.map((configuration, index) => { const key = `${order.orderNo}-${index}`; return <div className="stlGrup" key={key}><button className="productionBtn" disabled={Boolean(stlLoading)} onClick={() => downloadAbajurProduction(order, configuration, index)}>{stlLoading === key ? 'STL hazırlanıyor…' : `⬇ Abajur ${index + 1} · Baskıya Hazır STL`}</button><button className="isEmriBtn" disabled={Boolean(stlLoading)} onClick={() => showIsEmri(order, index)}>{stlLoading === `rapor-${order.orderNo}-${index}` ? 'Hazırlanıyor…' : '⚙ İş emri'}</button></div>; })}{ODEME_BEKLEYEN.includes(order.status) && <button className="odemeBtn" onClick={() => odemeBilgisiGonder(order)}>₺ Ödeme bilgisi gönder</button>}<button className="shipBtn" onClick={() => notifyOrder(order)}>Müşteriye WhatsApp aç</button></div></td></tr>) : <tr><td colSpan="6" className="empty">Henüz sipariş yok.</td></tr>}</tbody></table></div></section>

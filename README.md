@@ -162,6 +162,34 @@ Eksik bırakılırsa metinlerde köşeli parantezli yer tutucular görünür ve 
 kırmızı uyarı çıkar. `VITE_` önekli değişkenler derleme anında paket içine gömüldüğü için
 değiştirdikten sonra yeniden dağıtım gerekir.
 
+## Ürün görselleri ve renk seçenekleri
+
+Bir ürüne en fazla 12 görsel eklenebilir ve her görsele bir **renk/varyant etiketi**
+verilebilir ("Kemik Beyazı", "Terrakota"…). İlk sıradaki görsel kapaktır.
+
+Yönetici panelinde dosya seçiciden birden fazla fotoğraf aynı anda seçilebilir. Yüklenen
+her görsel için etiket kutusu, sıralama okları (← →) ve sil düğmesi çıkar; kapak, oklarla
+sıra değiştirilerek belirlenir.
+
+Müşteri tarafında:
+
+- Ürün kartında birden fazla görsel varsa **"N seçenek"** rozeti görünür.
+- Ürün detayında büyük görselin altında etiketli küçük görsel şeridi olur.
+- Görsele tıklanınca tam ekran açılır; ok tuşları ve ekrandaki oklarla gezilir, altta
+  sayaç ve küçük görsel şeridi bulunur.
+
+### Veri saklama
+
+`Products` sayfasına **`gorseller`** (J) sütunu eklendi; `[{url, etiket}]` biçiminde JSON
+tutar. Sütun uygulama tarafından otomatik oluşturulur.
+
+Eski `gorsel` (F) sütunu kapak görseli olarak yazılmaya devam eder. Yalnızca `gorsel`
+dolu olan eski kayıtlar tek görselli ürün gibi sorunsuz çalışır — geriye dönük uyum
+için `gorseller` boşsa `gorsel` alanına düşülür.
+
+Görseller yüklenmeden önce tarayıcıda küçültülüp WebP'ye çevrilir (bkz. Vercel 4,5 MB
+sınırı), yani 12 görsellik bir ürün bile toplamda birkaç MB yer kaplar.
+
 ## Google Sheets
 Kullanılacak Sheet ID:
 `1tUMUbXKOVxvj0UsuvQpLJKxSGSsFjltNHzGheL8o-70`
@@ -169,7 +197,7 @@ Kullanılacak Sheet ID:
 İlk kullanımda API `Products` ve `Orders` sayfalarını ve başlıklarını otomatik oluşturur. Google Sheets'in herkese açık olması okuma için yeterli değildir; admin panelinin ürün/sipariş yazabilmesi için Google Cloud'daki service account e-posta adresini bu Sheet'e **Düzenleyici** olarak paylaşmalısın.
 
 ### Products sütunları
-`id | urun | kategori | fiyat | stok | gorsel | aciklama | aktif | olusturma_tarihi`
+`id | urun | kategori | fiyat | stok | gorsel | aciklama | aktif | olusturma_tarihi | gorseller`
 
 ### Orders sütunları
 `siparis_no | tarih | musteri | telefon | email | adres | not | urunler | toplam | durum`
