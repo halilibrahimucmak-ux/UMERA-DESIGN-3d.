@@ -166,6 +166,7 @@ const FIYAT = {
   filament: { PLA: 780, PETG: 975, "PLA Silk": 1014 },
   fire: 8,
   makineSaat: 45,
+  akisMm3s: 4,
   elIsciligi: 60,
   boyunMontaj: 45,
   duy: { E27: 180, E14: 150 },
@@ -477,7 +478,8 @@ export default function AbajurKonfigurator({
 
   const mal = MALZEMELER[p.malzeme];
   const gram = hacim * (YOGUNLUK[p.malzeme] || 1.24);
-  const sureSaat = useMemo(() => (hacim * 1000) / 4.0 / 3600, [hacim]);
+  const akis = Math.max(0.5, fiyatAyar.akisMm3s || 4);
+  const sureSaat = useMemo(() => (hacim * 1000) / akis / 3600, [hacim, akis]);
 
   /* Fiyat, önizleme geometrisinden DEĞİL, sunucunun kullandığı kalite
      profilinden hesaplanır. Aksi halde iki taraf birkaç lira ayrışıyor ve
@@ -487,7 +489,7 @@ export default function AbajurKonfigurator({
     const { gram: fiyatGram, hacimCm3 } = olcum(p, KALITE.fiyat);
     const kgFiyat = t.filament[p.malzeme] ?? t.filament.PLA;
     const malzemeTL = (fiyatGram / 1000) * kgFiyat * (1 + t.fire / 100);
-    const makineTL = ((hacimCm3 * 1000) / 4 / 3600) * t.makineSaat;
+    const makineTL = ((hacimCm3 * 1000) / Math.max(0.5, t.akisMm3s || 4) / 3600) * t.makineSaat;
     const iscilikTL = t.elIsciligi;
     const boyunTL = t.boyunMontaj;
     const uretimMaliyeti = malzemeTL + makineTL + iscilikTL + boyunTL;

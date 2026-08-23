@@ -190,6 +190,78 @@ için `gorseller` boşsa `gorsel` alanına düşülür.
 Görseller yüklenmeden önce tarayıcıda küçültülüp WebP'ye çevrilir (bkz. Vercel 4,5 MB
 sınırı), yani 12 görsellik bir ürün bile toplamda birkaç MB yer kaplar.
 
+## Abajur fiyatı nasıl belirleniyor, nereden değiştirilir
+
+Tarife tek yerde: **`lib/abajur.js` → `ABAJUR_FIYAT`**. Konfigüratör bu tabloyu
+`/api/abajur-price` üzerinden çektiği için burada yapılan değişiklik hem müşteriye
+gösterilen fiyatı hem de sipariş anında sunucuda doğrulanan fiyatı aynı anda değiştirir.
+
+Hesap sırası:
+
+```text
+filament   = ağırlık(kg) × ₺/kg × (1 + fire%)
+makine     = baskı süresi × ₺/saat        ← baskı süresi = hacim ÷ akisMm3s
+işçilik    = elIsciligi + boyunMontaj
+             ─────────────────────────
+üretim     = filament + makine + işçilik
+kâr        = üretim × kar%
+duy seti   = duy alış × (1 + duyMarj%)     ← yalnızca "duylu set" seçilirse
+             ─────────────────────────
+satış      = (üretim + kâr + duy) × (1 + KDV%)
+```
+
+### Varsayılan abajurda dökümü (Ø190×254, PLA, 260 g)
+
+| Kalem | Tutar | Payı |
+|---|---|---|
+| Filament (%8 fire) | ₺219 | %12 |
+| **Makine (14,6 sa × ₺45)** | **₺656** | **%37** |
+| El işçiliği + boyun montajı | ₺105 | %6 |
+| Kâr (%55) | ₺539 | %31 |
+| Duy seti (%35 marj) | ₺243 | %14 |
+| KDV (%20) | ₺352 | — |
+| **Satış** | **₺2.115** | |
+
+### Fiyat yüksek geliyorsa: önce `akisMm3s`
+
+Fiyatın en büyük kalemi makine saati ve onu belirleyen şey `akisMm3s` — saniyede kaç mm³
+malzeme basıldığı varsayımı. Varsayılan **4 mm³/s** oldukça temkinli; Bambu X2D bunun
+üstünde çalışır. Değer düştükçe süre, dolayısıyla fiyat şişer:
+
+| akisMm3s | Baskı süresi | Satış fiyatı |
+|---|---|---|
+| 4 (varsayılan) | 14,6 saat | ₺2.115 |
+| 6 | 9,7 saat | ₺1.708 |
+| 8 | 7,3 saat | ₺1.505 |
+| 10 | 5,8 saat | ₺1.383 |
+| 12 | 4,9 saat | ₺1.301 |
+
+**Tahminle değiştirme, ölç.** Yönetici panelinden bir abajurun STL'ini indir, Bambu
+Studio'da dilimle, çıkan gerçek süreyi al ve şunu hesapla:
+
+```text
+akisMm3s = hacim(cm³) × 1000 ÷ (gerçek_süre_saat × 3600)
+```
+
+İş emrindeki `tahminiAgirlik` ve konfigüratördeki hacim bu hesap için yeterli. Bir kez
+kalibre edersen bütün ölçüler için doğru çalışır.
+
+### Diğer ayarlar
+
+| Alan | Ne yapar |
+|---|---|
+| `filament` | ₺/kg makara alış fiyatı (malzeme başına) |
+| `fire` | % — başarısız baskı, purge, destek payı |
+| `makineSaat` | ₺/saat — amortisman, elektrik, nozul/bakım |
+| `elIsciligi` | ₺/adet — dilimleme, tabla hazırlık, temizlik, paketleme |
+| `boyunMontaj` | ₺/adet — boyunlu modelde ek işçilik |
+| `duy` | ₺/adet — duy + kablo + askı alış maliyeti |
+| `kar` | % — üretim maliyeti üzerine kâr |
+| `duyMarj` | % — hazır parçaya uygulanan ticari marj |
+| `kdv` | % |
+
+Değişiklikten sonra yeniden dağıtım gerekir.
+
 ## Kargo ücreti
 
 Ortam değişkenleriyle yönetilir:
