@@ -1,7 +1,7 @@
-import { appendOrder, getProducts, updateOrderStatus } from '../lib/sheets.js';
+import { appendOrder, getProducts, updateOrderStatus, getAbajurFiyat } from '../lib/sheets.js';
 import { requireAdmin } from '../lib/auth.js';
 import { enforceRateLimit, setRateLimitResponse } from '../lib/rate-limit.js';
-import { quoteAbajur } from '../lib/abajur.js';
+import { quoteAbajur, tarifeBirlestir } from '../lib/abajur.js';
 import { sendOrderStatusNotification } from '../lib/notifications.js';
 import { odemeTalimati } from '../lib/odeme.js';
 import { kargoHesapla } from '../lib/kargo.js';
@@ -28,11 +28,14 @@ export default async function handler(req, res) {
       if (body.items.length > 30) return res.status(400).json({ error: 'Sepette çok fazla ürün var.' });
 
       const currentProducts = await getProducts();
+      // Abajur fiyatı yöneticinin kaydettiği tarifeyle yeniden hesaplanır;
+      // istemciden gelen tutar hiçbir koşulda kullanılmaz.
+      const tarife = tarifeBirlestir(await getAbajurFiyat().catch(() => ({})));
       const validatedItems = body.items.map(item => {
         const quantity = Math.max(1, Math.min(99, Number(item.quantity) || 1));
         if (item.type === 'abajur') {
           const abajurQuantity = Math.min(20, quantity);
-          const quote = quoteAbajur({ ...(item.config || {}), adet: abajurQuantity });
+          const quote = quoteAbajur({ ...(item.config || {}), adet: abajurQuantity }, tarife);
           return {
             id: cleanText(item.id, 100) || `abajur-${Date.now().toString(36)}`,
             type: 'abajur',

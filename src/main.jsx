@@ -1248,6 +1248,166 @@ function GorselYonetici({ images, setImages }) {
   );
 }
 
+/* Yönetici: abajur fiyat tarifesi. Alanlar Sheets'te saklanır ve hem
+   müşteriye gösterilen hem sipariş anında doğrulanan fiyatı belirler. */
+const TARIFE_ALAN_BILGISI = [
+  { anahtar: 'akisMm3s', ad: 'Baskı akışı', birim: 'mm³/s', grup: 'Üretim',
+    not: 'Fiyatı en çok etkileyen değer. Düşük = uzun süre varsayımı = yüksek fiyat.' },
+  { anahtar: 'makineSaat', ad: 'Makine saati', birim: '₺/saat', grup: 'Üretim',
+    not: 'Amortisman, elektrik, nozul ve bakım.' },
+  { anahtar: 'elIsciligi', ad: 'El işçiliği', birim: '₺/adet', grup: 'Üretim',
+    not: 'Dilimleme, tabla hazırlık, temizlik, paketleme.' },
+  { anahtar: 'boyunMontaj', ad: 'Boyun montajı', birim: '₺/adet', grup: 'Üretim' },
+  { anahtar: 'fire', ad: 'Fire payı', birim: '%', grup: 'Üretim',
+    not: 'Başarısız baskı, purge ve destek payı.' },
+
+  { anahtar: 'filament.PLA', ad: 'PLA', birim: '₺/kg', grup: 'Filament' },
+  { anahtar: 'filament.PETG', ad: 'PETG', birim: '₺/kg', grup: 'Filament' },
+  { anahtar: 'filament.PLA Silk', ad: 'PLA Silk', birim: '₺/kg', grup: 'Filament' },
+
+  { anahtar: 'duy.E27', ad: 'E27 duy seti', birim: '₺/adet', grup: 'Hazır parça',
+    not: 'Duy + kablo + askı alış maliyeti.' },
+  { anahtar: 'duy.E14', ad: 'E14 duy seti', birim: '₺/adet', grup: 'Hazır parça' },
+  { anahtar: 'duyMarj', ad: 'Duy marjı', birim: '%', grup: 'Hazır parça' },
+
+  { anahtar: 'kar', ad: 'Kâr oranı', birim: '%', grup: 'Kâr ve vergi',
+    not: 'Üretim maliyeti üzerine eklenir.' },
+  { anahtar: 'kdv', ad: 'KDV', birim: '%', grup: 'Kâr ve vergi' }
+];
+
+function AbajurTarifePaneli() {
+  const [alanlar, setAlanlar] = useState(null);
+  const [varsayilan, setVarsayilan] = useState(null);
+  const [kaydediliyor, setKaydediliyor] = useState(false);
+  const [onizleme, setOnizleme] = useState(null);
+  const [gercekSure, setGercekSure] = useState('');
+
+  useEffect(() => {
+    let iptal = false;
+    api('/api/abajur-price', { cache: 'no-cache' })
+      .then(veri => {
+        if (iptal || !veri?.alanlar) return;
+        setAlanlar(veri.alanlar);
+        setVarsayilan(veri.varsayilan || null);
+      })
+      .catch(hata => bildir(hata.message, 'hata'));
+    return () => { iptal = true; };
+  }, []);
+
+  // Değişiklik yapıldıkça örnek abajurun fiyatını sunucuya hesaplattır.
+  useEffect(() => {
+    if (!alanlar) return;
+    let iptal = false;
+    const zaman = setTimeout(() => {
+      api('/api/abajur-price', { method: 'POST', body: JSON.stringify({ config: {}, tarife: alanlar }) })
+        .then(q => { if (!iptal) setOnizleme(q); })
+        .catch(() => {});
+    }, 350);
+    return () => { iptal = true; clearTimeout(zaman); };
+  }, [alanlar]);
+
+  if (!alanlar) return <div className="empty">Fiyat tarifesi yükleniyor…</div>;
+
+  const degistir = (anahtar, deger) => setAlanlar(o => ({ ...o, [anahtar]: deger }));
+
+  async function kaydet() {
+    setKaydediliyor(true);
+    try {
+      const yanit = await api('/api/abajur-price', { method: 'PUT', body: JSON.stringify(alanlar) });
+      setAlanlar(yanit.alanlar);
+      bildir('Fiyat tarifesi kaydedildi. Müşteriye gösterilen fiyatlar güncellendi.', 'basari');
+    } catch (hata) {
+      bildir(hata.message, 'hata');
+    } finally {
+      setKaydediliyor(false);
+    }
+  }
+
+  /* Bambu Studio'daki gerçek süreden akışı hesaplar:
+     akis = hacim(cm³) × 1000 ÷ (süre_saat × 3600) */
+  function akisiKalibreEt() {
+    const saat = Number(String(gercekSure).replace(',', '.'));
+    if (!Number.isFinite(saat) || saat <= 0) {
+      return bildir('Bambu Studio\'da çıkan süreyi saat olarak gir (ör. 6,5).', 'hata');
+    }
+    if (!onizleme?.hacimCm3) {
+      return bildir('Önce örnek fiyat hesaplansın, sonra kalibre et.', 'hata');
+    }
+    const akis = (onizleme.hacimCm3 * 1000) / (saat * 3600);
+    degistir('akisMm3s', Math.round(akis * 10) / 10);
+    bildir(`Akış ${(Math.round(akis * 10) / 10)} mm³/s olarak ayarlandı. Kaydetmeyi unutma.`, 'basari');
+  }
+
+  const gruplar = [...new Set(TARIFE_ALAN_BILGISI.map(a => a.grup))];
+
+  return (
+    <div className="tarifePanel">
+      <div className="tarifeOnizleme">
+        <div>
+          <small>Örnek abajur · Ø190 × 254 mm · PLA · E27 set</small>
+          <b>{onizleme ? money(onizleme.birim) : "…"}</b>
+          {onizleme && (
+            <span>{onizleme.gram} g · {onizleme.hacimCm3} cm³ · ~{onizleme.sureSaat} saat baskı</span>
+          )}
+        </div>
+        <small className="tarifeNot">Bu tutar sunucuda, kaydedilmiş tarifeyle hesaplanır.</small>
+      </div>
+
+      <div className="tarifeKalibre">
+        <b>Akışı gerçek baskıdan kalibre et</b>
+        <p>Bir abajurun STL'ini Bambu Studio'da dilimle, çıkan süreyi buraya yaz.</p>
+        <div>
+          <input
+            type="text"
+            inputMode="decimal"
+            placeholder="Örn. 6,5"
+            value={gercekSure}
+            onChange={e => setGercekSure(e.target.value)}
+            aria-label="Bambu Studio süresi (saat)"
+          />
+          <span>saat</span>
+          <button type="button" className="ghost" onClick={akisiKalibreEt}>Akışı hesapla</button>
+        </div>
+      </div>
+
+      {gruplar.map(grup => (
+        <div className="tarifeGrup" key={grup}>
+          <h4>{grup}</h4>
+          {TARIFE_ALAN_BILGISI.filter(a => a.grup === grup).map(alan => {
+            const vars = varsayilan?.[alan.anahtar];
+            const degisti = vars !== undefined && Number(alanlar[alan.anahtar]) !== Number(vars);
+            return (
+              <label className="tarifeAlan" key={alan.anahtar}>
+                <div>
+                  <b>{alan.ad}</b>
+                  {alan.not && <small>{alan.not}</small>}
+                </div>
+                <div className="tarifeGiris">
+                  <input
+                    type="number"
+                    step="any"
+                    min="0"
+                    value={alanlar[alan.anahtar] ?? ''}
+                    onChange={e => degistir(alan.anahtar, e.target.value)}
+                  />
+                  <span>{alan.birim}</span>
+                  {degisti && (
+                    <button type="button" title={`Varsayılan: ${vars}`} onClick={() => degistir(alan.anahtar, vars)}>↺</button>
+                  )}
+                </div>
+              </label>
+            );
+          })}
+        </div>
+      ))}
+
+      <button className="primary full" onClick={kaydet} disabled={kaydediliyor}>
+        {kaydediliyor ? 'Kaydediliyor…' : 'Fiyat tarifesini kaydet'}
+      </button>
+    </div>
+  );
+}
+
 function SkeletonGrid({ adet = 6, sinif = 'grid' }) {
   return (
     <div className={sinif} aria-hidden="true">
@@ -1553,6 +1713,8 @@ function AdminPanel({ stats, orders, customOrders, odeme, products, form, setFor
         <section className="panel"><div className="panelHead"><div><b>Ürün Yönetimi</b><span>Google Sheets ile senkron</span></div><button className="primary" onClick={newProduct}>+ Yeni Ürün</button></div><div className="productAdmin">{products.map(product => <div className="pRow" key={product.id}><img src={product.image || '/logo-mark.webp'} alt="" /><div><b>{product.name}</b><span>{product.category} · {money(product.price)} · Stok {product.stock}{product.images?.length > 1 ? ` · ${product.images.length} görsel` : ''}{minAdet(product) > 1 ? ` · min ${minAdet(product)} adet` : ''}</span></div><button onClick={() => editProduct(product)}>Düzenle</button><button className="danger" onClick={() => delProduct(product.id)}>Sil</button></div>)}</div></section>
         <section className="panel editor"><div className="panelHead"><div><b>{edit ? 'Ürünü Düzenle' : 'Yeni Ürün'}</b><span>Bilgileri girip kaydet</span></div></div><form className="form" onSubmit={saveProduct}><Field label="Ürün adı *" value={form.name} onChange={event => setForm({ ...form, name: event.target.value })} required /><label>Kategori<select value={form.category} onChange={event => setForm({ ...form, category: event.target.value })}>{CATS.filter(item => item !== 'Tümü').map(category => <option key={category}>{category}</option>)}</select></label><div className="two"><Field label="Fiyat (TL) *" type="number" min="0" value={form.price} onChange={event => setForm({ ...form, price: event.target.value })} required /><Field label="Stok *" type="number" min="0" value={form.stock} onChange={event => setForm({ ...form, stock: event.target.value })} required /></div><label>Minimum sipariş adedi <span className="muted">(müşteri bu üründen en az kaç adet almalı — 1 = sınır yok)</span><input type="number" min="1" max="999" value={form.minAdet ?? 1} onChange={event => setForm({ ...form, minAdet: event.target.value })} /></label><label>Ürün Görselleri <span className="muted">(her renk seçeneği için bir fotoğraf — ilk sıradaki kapak olur)</span><input type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={uploadImage} /></label>{imageUploading && <div className="notice">{uploadDurum || 'Görsel yükleniyor…'}</div>}<GorselYonetici images={form.images || []} setImages={liste => setForm({ ...form, images: liste })} /><label>Açıklama<textarea rows="4" value={form.description} onChange={event => setForm({ ...form, description: event.target.value })} /></label><div className="two"><button className="primary">{edit ? 'Değişiklikleri Kaydet' : 'Ürünü Yayınla'}</button><button type="button" className="ghost" onClick={newProduct}>Temizle</button></div></form></section>
       </div>
+
+      <section className="panel"><div className="panelHead"><div><b>Abajur Fiyat Tarifesi</b><span>Tasarım stüdyosundaki fiyatları belirler · Google Sheets "AbajurFiyat" sayfasında saklanır</span></div></div><AbajurTarifePaneli /></section>
 
       <section className="panel orders"><div className="panelHead"><div><b>Sipariş Yönetimi</b><span>Durumu değiştirdiğinizde müşteriye otomatik bildirim gönderilir · sipariş tasarımları baskıya hazır STL olarak indirilir</span></div></div><div className="tableWrap"><table><thead><tr><th>Sipariş</th><th>Müşteri</th><th>Ürünler</th><th>Tutar</th><th>Durum</th><th>İşlem</th></tr></thead><tbody>{orders.length ? orders.map(order => <tr key={order.orderNo}><td><b>{order.orderNo}</b><small>{new Date(order.date).toLocaleString('tr-TR')}</small></td><td><b>{order.name}</b><small>{order.phone}</small>{order.email && <small>{order.email}</small>}<small>{order.address}</small></td><td>{order.items}{order.configurations?.length > 0 && <small className="productionBadge">◈ {order.configurations.length} STL üretime hazır</small>}</td><td><b>{money(order.total)}</b>{ODEME_BEKLEYEN.includes(order.status) && <small className="odemeBekliyor">Ödeme bekliyor</small>}</td><td><select className="statusSelect" value={order.status} onChange={event => updateOrder(order, event.target.value)}>{ORDER_STATUSES.map(status => <option key={status}>{status}</option>)}</select><small>Değişiklikte bildirim gider</small></td><td><div className="orderActions">{order.configurations?.map((configuration, index) => { const key = `${order.orderNo}-${index}`; return <div className="stlGrup" key={key}><button className="productionBtn" disabled={Boolean(stlLoading)} onClick={() => downloadAbajurProduction(order, configuration, index)}>{stlLoading === key ? 'STL hazırlanıyor…' : `⬇ Abajur ${index + 1} · Baskıya Hazır STL`}</button><button className="isEmriBtn" disabled={Boolean(stlLoading)} onClick={() => showIsEmri(order, index)}>{stlLoading === `rapor-${order.orderNo}-${index}` ? 'Hazırlanıyor…' : '⚙ İş emri'}</button></div>; })}{ODEME_BEKLEYEN.includes(order.status) && <button className="odemeBtn" onClick={() => odemeBilgisiGonder(order)}>₺ Ödeme bilgisi gönder</button>}<button className="shipBtn" onClick={() => notifyOrder(order)}>Müşteriye WhatsApp aç</button></div></td></tr>) : <tr><td colSpan="6" className="empty">Henüz sipariş yok.</td></tr>}</tbody></table></div></section>
 

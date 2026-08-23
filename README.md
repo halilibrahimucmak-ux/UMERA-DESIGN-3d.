@@ -192,7 +192,15 @@ sınırı), yani 12 görsellik bir ürün bile toplamda birkaç MB yer kaplar.
 
 ## Abajur fiyatı nasıl belirleniyor, nereden değiştirilir
 
-Tarife tek yerde: **`lib/abajur.js` → `ABAJUR_FIYAT`**. Konfigüratör bu tabloyu
+Tarife **yönetici panelinden** düzenlenir: Admin → **Abajur Fiyat Tarifesi**. Değerler
+Google Sheets'teki `AbajurFiyat` sayfasında anahtar/değer olarak saklanır (sayfayı
+uygulama kendisi oluşturur), varsayılanlar `lib/abajur-tarife.js` içindedir.
+
+Panelde her alanın yanında bir **canlı fiyat önizlemesi** var: örnek abajurun (Ø190×254,
+PLA, E27 set) fiyatı sen yazdıkça güncellenir, böylece kaydetmeden önce etkiyi görürsün.
+Varsayılandan sapan alanların yanında **↺** düğmesiyle tek tıkla geri dönebilirsin.
+
+Konfigüratör bu tabloyu
 `/api/abajur-price` üzerinden çektiği için burada yapılan değişiklik hem müşteriye
 gösterilen fiyatı hem de sipariş anında sunucuda doğrulanan fiyatı aynı anda değiştirir.
 
@@ -236,7 +244,10 @@ malzeme basıldığı varsayımı. Varsayılan **4 mm³/s** oldukça temkinli; B
 | 10 | 5,8 saat | ₺1.383 |
 | 12 | 4,9 saat | ₺1.301 |
 
-**Tahminle değiştirme, ölç.** Yönetici panelinden bir abajurun STL'ini indir, Bambu
+**Panelde kalibrasyon aracı var.** Bir abajurun STL'ini indir, Bambu Studio'da dilimle,
+çıkan süreyi "Akışı gerçek baskıdan kalibre et" kutusuna saat olarak yaz (ör. `6,5`) ve
+**Akışı hesapla**'ya bas — doğru `akisMm3s` değerini kendisi bulur. Elle hesaplamak
+istersen: yönetici panelinden bir abajurun STL'ini indir, Bambu
 Studio'da dilimle, çıkan gerçek süreyi al ve şunu hesapla:
 
 ```text
@@ -260,7 +271,18 @@ kalibre edersen bütün ölçüler için doğru çalışır.
 | `duyMarj` | % — hazır parçaya uygulanan ticari marj |
 | `kdv` | % |
 
-Değişiklikten sonra yeniden dağıtım gerekir.
+Panelden yapılan değişiklik anında geçerli olur; yeniden dağıtım gerekmez.
+
+### Güvenlik
+
+Müşteriye gösterilen ve siparişte tahsil edilen fiyat **daima sunucudaki kayıtlı
+tarifeden** hesaplanır. Yönetici paneli, kaydetmeden önizleme yapabilmek için istekte
+kendi tarifesini gönderir; bu yalnızca yönetici oturumunda kabul edilir, müşteri aynı
+isteği gönderirse 401 döner. Yani sepete kendi fiyatını yazdırmak mümkün değil.
+
+Geçersiz veya uçuk değerler kaydedilirken güvenli aralığa sıkıştırılır (ör. akış en az
+0,5 mm³/s — sıfır olsaydı baskı süresi sonsuza giderdi). Tarifenin bir kısmı bozulsa bile
+o alan varsayılana düşer, fiyatlandırma durmaz.
 
 ## Kargo ücreti
 
