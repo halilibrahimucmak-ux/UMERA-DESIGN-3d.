@@ -136,7 +136,7 @@ const VARSAYILAN = {
   malzeme: "PLA",
   renk: "Kemik Beyazı",
   montaj: "boyun",
-  bogazCap: 41,
+  bogazCap: 42,
   boyunH: 12,
   kolSayisi: 4,
   kolKalinlik: 4.2,

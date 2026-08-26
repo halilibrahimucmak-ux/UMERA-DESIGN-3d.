@@ -4,7 +4,7 @@
 
 - Üst menüdeki **Abajur Tasarla** bağlantısı canlı Three.js yapılandırıcısını açar.
 - Müşteri hazır bir tasarımla başlar (Nordik, Fener, Origami, Sarmal, Kum Saati, Dalga), boyut/renk/malzeme seçer ve isterse **Detaylı ayarlar** ile profil, desen, nervür ve duvar kalınlığına iner.
-- Duy bağlantısı kullanıcı tarafından değiştirilemez: E27 Ø41,4 mm geçme ve dört kıvrımlı taşıyıcıyla; E14 Ø28,4 mm geçme ve üç kıvrımlı taşıyıcıyla sabit üretilir.
+- Duy bağlantısı kullanıcı tarafından değiştirilemez: E27 Ø42,4 mm geçme ve dört kıvrımlı taşıyıcıyla; E14 Ø28,4 mm geçme ve üç kıvrımlı taşıyıcıyla sabit üretilir.
 - Sepete ekleme sırasında `/api/abajur-price` seçimi sunucuda yeniden doğrular ve fiyatı aynı geometri üzerinden hesaplar.
 - Siparişin tam üretim yapılandırması Google Sheets `Orders` sayfasındaki `yapilandirma_json` sütununda saklanır.
 - Yönetici panelinde her abajur için **Baskıya Hazır STL** ve **İş emri** düğmeleri görünür. Müşteri STL dosyasına hiçbir noktada erişemez.
@@ -36,7 +36,8 @@ Yazıcı değişirse `lib/abajur-geometri.mjs` içindeki `TABLA` sabitini günce
 
 Abajurun tepesindeki delik ampule değil, duyun plastik gövdesine geçer. E27/E14
 ampul dişi standarttır (27 / 14 mm) ama duyun plastik gövdesi markadan markaya
-değişir. Tablodaki varsayım: E27 için 41,4 mm, E14 için 28,4 mm geçme deliği.
+değişir. Tablodaki değer: E27 için 42,4 mm (ölçülen 42 mm gövde + 0,4 mm baskı
+toleransı), E14 için 28,4 mm geçme deliği.
 
 Kendi duyunla doğrulamak için gerçek boyun profilinin farklı çaplarda basılmış
 test halkalarını üret:
