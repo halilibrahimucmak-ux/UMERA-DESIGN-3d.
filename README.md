@@ -32,6 +32,32 @@ STL üretimi Bambu X2D için hazırlanmıştır ve şunları garanti eder:
 Yazıcı değişirse `lib/abajur-geometri.mjs` içindeki `TABLA` sabitini güncelle; tüm ölçü sınırları ve uyarılar oradan türer.
 
 
+### Duy geçme çapını doğrulama
+
+Abajurun tepesindeki delik ampule değil, duyun plastik gövdesine geçer. E27/E14
+ampul dişi standarttır (27 / 14 mm) ama duyun plastik gövdesi markadan markaya
+değişir. Tablodaki varsayım: E27 için 41,4 mm, E14 için 28,4 mm geçme deliği.
+
+Kendi duyunla doğrulamak için gerçek boyun profilinin farklı çaplarda basılmış
+test halkalarını üret:
+
+```bash
+node scripts/duy-test.mjs E27
+```
+
+Tek plakada 6 halka çıkar; yanlarındaki nokta sayısı sırayı gösterir (1 nokta =
+en küçük çap). Duyu elle bastırınca giren ve çevirince dönmeyen ilk halka doğru
+ölçüdür. Aralık ve adım değiştirilebilir:
+
+```bash
+node scripts/duy-test.mjs E27 41.5 43.5 0.4
+```
+
+Yerleşim yazıcı tablasına göre satırlara bölünür; sığmazsa uyarı verir.
+
+Doğru değeri bulunca `lib/abajur-geometri.mjs` içindeki `DUY_MONTAJ` tablosunda
+`gecmeCap` alanını güncelle — hem önizleme hem STL tek yerden değişir.
+
 ### Taşıyıcı birleşimi ve üst yaka
 
 Üst halkada, desenin yumuşakça sıfıra indiği ~14 mm yüksekliğinde desensiz bir yaka bandı vardır.
