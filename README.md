@@ -23,6 +23,8 @@ STL üretimi Bambu X2D için hazırlanmıştır ve şunları garanti eder:
 - **Gerçek yüzey normalleri.** Facet normalleri üçgen düzleminden hesaplanır, köşe normali ortalamasından değil. Sıfır alanlı üçgenler dosyaya yazılmaz.
 - **Hazır yerleşim.** Model ters çevrilir (boyun ve taşıyıcılar tablaya yatar, havada köprü kalmaz), Z=0'a oturtulur ve XY'de ortalanır. Dilimleyicide taşımaya gerek yoktur.
 - **Hat genişliğine oturan duvar.** Duvar kalınlığı 0,42 mm'nin tam katına yuvarlanır (2–6 duvar). Böylece dilimleyici boşluk dolgusu üretmez ve basılan et istenen ölçüyü tutar.
+- **Yüzeye dik sabit et.** Duvar yarıçap yönünde değil, yüzeye dik olarak sabit kalınlıkta kesilir. Yarıçap yönünde sabit kesilseydi eğimli yüzeylerde gerçek et `cidar × cos(eğim)` kadar incelirdi; dalgalı tasarımlarda bu 0,42 mm hat genişliğinin altına inip Bambu Studio'nun o katmanları hiç basmamasına yol açıyordu ("boş katman" uyarısı, ölçüldü: 0,40 mm). Gereken yarıçap ölçeği `sqrt(1 + (r_θ/r)² + (r_u/H)²)` kapalı formülünden çıkar, `ET_OLCEK_TAVANI` ile sınırlanır.
+- **Eski siparişler üretim sınırlarına çekilir.** STL, siparişte saklanan yapılandırmayı doğrudan kullanmaz; `normalizeAbajurConfig` ile bugünkü kurallardan geçirir. Eski bir sipariş 0,6 mm duvarla kaydedilmişse 0,84 mm'ye (2 hat) yükseltilir ve düzeltme iş emrinde tek tek bildirilir.
 - **Hata payına göre çözünürlük.** Üçgen sayısı sabit değil; yüzeyin ideal eğriden sapması üretimde 0,045 mm'nin altında tutulur — 0,4 mm nozulun çok altında.
 
 İş emri, Bambu Studio için kat yüksekliği, duvar sayısı, dolgu, brim ve destek önerilerini; ayrıca ilk kat temas alanını ve tahmini ağırlığı verir.

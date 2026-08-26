@@ -19,6 +19,7 @@ import {
   disR,
   DUY_MONTAJ,
   AYAK_GOMME,
+  etOlcegi,
 } from '../lib/abajur-geometri.mjs';
 import { normalizeAbajurConfig, quoteAbajur } from '../lib/abajur.js';
 import { uret } from '../lib/siparis-stl.mjs';
@@ -51,6 +52,8 @@ test('her tasarımda gövde ve montaj parçaları kapalı (su geçirmez) ağdır
 
 test('kabuk hacmi analitik integrale eşit', () => {
   // Düz profil + nervür deseninde kabuk hacmi kapalı formülle hesaplanabilir.
+  // Duvar yüzeye DİK sabit kalınlıkta olduğu için yarıçap yönündeki kesit
+  // eğim ölçeğiyle çarpılır (bkz. etOlcegi).
   const p = normalizeAbajurConfig({ profil: 'duz', desen: 'nervur', nervurSayisi: 22, derinlik: 3 });
   const geo = abajurGeometrisi(p, KALITE.uretim);
 
@@ -59,7 +62,7 @@ test('kabuk hacmi analitik integrale eşit', () => {
   for (let c = 0; c < N; c++) {
     const th = (c / N) * Math.PI * 2;
     const ro = disR(th, 0, p);
-    const ri = Math.max(0.5, ro - p.cidar);
+    const ri = Math.max(0.5, ro - p.cidar * etOlcegi(th, 0, p, ro));
     alan += ((ro * ro - ri * ri) / 2) * ((Math.PI * 2) / N);
   }
   const analitik = (alan * p.yukseklik) / 1000;
