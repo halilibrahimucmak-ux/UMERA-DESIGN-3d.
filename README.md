@@ -32,6 +32,55 @@ STL üretimi Bambu X2D için hazırlanmıştır ve şunları garanti eder:
 Yazıcı değişirse `lib/abajur-geometri.mjs` içindeki `TABLA` sabitini güncelle; tüm ölçü sınırları ve uyarılar oradan türer.
 
 
+## Delikli kafes desenleri
+
+Nervür, dalga ve faset yalnızca yüzeyi kabartır — gövde her yerde kapalı kalır.
+Kafes desenleri ise gövdeyi **gerçekten deler**: ışık deliklerden geçer, ürün
+belirgin biçimde hafifler ve ucuzlar.
+
+| Desen | Görünüm | Baskı |
+|---|---|---|
+| **Elmas** | Baklava dilimi kafes | Delikler sivri kapanır, köprü yok — en güvenli |
+| **Petek** | Düzgün altıgen hücreler | Hücre tavanlarında kısa köprü |
+| **Organik** | Düzensiz Voronoi hücreleri | Hücre tavanlarında kısa köprü |
+
+Ø180 × 250 mm gövdede ölçülen (çubuk 2,5 mm):
+
+| | Ağırlık | Baskı | Fiyat |
+|---|---|---|---|
+| Kapalı | 262 g | 14,6 sa | 2.122 ₺ |
+| Elmas | 93 g | 5,0 sa | 1.150 ₺ |
+| Organik | 84 g | 4,3 sa | 1.000 ₺ |
+| Petek | 76 g | 3,9 sa | 919 ₺ |
+
+### Nasıl çalışıyor
+
+Her desen açılmış yüzey üzerinde **işaretli uzaklık** üretir (`lib/abajur-delik.mjs`):
+pozitif değer katı, negatif değer delik. Değer milimetre cinsinden olduğu için
+çubuk kalınlığı doğrudan kontrol edilir.
+
+Geometri, hücreyi maskelemek yerine **konturdan kırpar**: kabuğun her üçgeni
+sıfır geçişinde ara değerle kesilir, kesim noktaları komşu hücrelerle paylaşılır.
+Maskeleme yapılsaydı delik kenarları ızgaraya takılıp merdivenlenirdi.
+
+Dörtgen değil üçgen kırpılır: dörtgende çapraz iki köşe katı, diğer ikisi delik
+olduğunda ("eyer" hücresi) konturun iki ayrı parçası tek poligona bağlanıp ağı
+açıyordu. Üçgende bu belirsizlik yok.
+
+### Üretim güvenceleri
+
+- **Ağ su geçirmez kalır.** 18 senaryo (üç desen × altı gövde) kenar bazında
+  doğrulanıyor. Delik yan duvarları kabuğun iç ve dış yüzeyini kapatır.
+- **Üst yaka ve alt halka daima katı.** Taşıyıcı ayaklar ve halkalar delinmiyor;
+  delikler yalnızca aradaki bantta açılıyor.
+- **Boş katman oluşmuyor.** Her Z yüksekliğinde kesit kontrol ediliyor.
+- **Çubuk kalınlığı tutuyor.** 2 mm altında iş emri kırılganlık uyarısı verir.
+- **Belirlenimci.** Organik desendeki rastgelelik `delikTohum` ile tohumlanır;
+  aynı sipariş aylar sonra da aynı modeli verir. Petek tohumdan bağımsızdır.
+
+Dosya adına kafes deseni eklenir (`abajur_duz_180x250_duz_organik_E27_PLA.stl`):
+aynı gövdeden farklı ürünler çıktığı için üretimde karışmasın.
+
 ### Duy geçme çapını doğrulama
 
 Abajurun tepesindeki delik ampule değil, duyun plastik gövdesine geçer. E27/E14

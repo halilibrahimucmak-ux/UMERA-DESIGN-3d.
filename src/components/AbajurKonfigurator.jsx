@@ -60,6 +60,22 @@ const PROFILLER = [
   { id: "can", ad: "Çan" },
 ];
 
+/* Delik desenleri gövdeyi gerçekten deler: ışık delikten geçer, malzeme
+   ve baskı süresi belirgin düşer. Geometri lib/abajur-delik.mjs içinde. */
+const DELIKLER = [
+  { id: "yok", ad: "Kapalı" },
+  { id: "elmas", ad: "Elmas" },
+  { id: "petek", ad: "Petek" },
+  { id: "organik", ad: "Organik" },
+];
+
+const DELIK_NOTU = {
+  yok: "Gövde kapalı; ışık duvardan süzülür.",
+  elmas: "Baklava dilimi kafes. Delikler sivri kapandığı için en güvenli basılan desen.",
+  petek: "Düzgün altıgen hücreler. Geometrik ve dingin bir görünüm.",
+  organik: "Doğal, düzensiz hücreler. Her tohum farklı bir desen üretir.",
+};
+
 const DESENLER = [
   { id: "duz", ad: "Düz" },
   { id: "nervur", ad: "Nervür" },
@@ -101,6 +117,16 @@ const SABLONLAR = [
     form: { profil: "kumsaati", desen: "duz", nervurSayisi: 20, derinlik: 2, burgu: 0, altCap: 200, ustCap: 200, yukseklik: 250, bel: 26 },
   },
   {
+    id: "kafes", ad: "Kafes", not: "Elmas delikli, ışık geçiren",
+    form: { profil: "duz", desen: "duz", altCap: 180, ustCap: 180, yukseklik: 250, bel: 0, burgu: 0,
+            delik: "elmas", cubukKalinlik: 2.5, delikBoyu: 17 },
+  },
+  {
+    id: "mercan", ad: "Mercan", not: "Organik hücreli, heykelsi",
+    form: { profil: "fici", desen: "duz", altCap: 185, ustCap: 165, yukseklik: 240, bel: 16, burgu: 0,
+            delik: "organik", cubukKalinlik: 2.8, delikBoyu: 20, delikTohum: 7 },
+  },
+  {
     id: "dalga", ad: "Dalga", not: "Yatay dalgalı doku",
     form: { profil: "duz", desen: "dalga", nervurSayisi: 20, derinlik: 4.5, burgu: 0, dalgaSayisi: 5, altCap: 190, ustCap: 190, yukseklik: 240, bel: 0 },
   },
@@ -133,6 +159,10 @@ const VARSAYILAN = {
   burgu: 0,
   dalgaSayisi: 6,
   cidar: 1.26,
+  delik: "yok",
+  cubukKalinlik: 2.5,
+  delikBoyu: 18,
+  delikTohum: 1,
   malzeme: "PLA",
   renk: "Kemik Beyazı",
   montaj: "boyun",
@@ -416,7 +446,9 @@ export default function AbajurKonfigurator({
   }, []);
 
   const sablonUygula = useCallback((s) => {
-    setP((o) => sabitDuyConfig({ ...o, ...s.form }));
+    // Şablonda delik belirtilmemişse kapalıya dön; aksi halde önceki
+    // şablonun kafesi yeni forma yapışık kalıyor.
+    setP((o) => sabitDuyConfig({ ...o, delik: "yok", delikTohum: 1, ...s.form }));
     setSablon(s.id);
   }, []);
 
@@ -1172,7 +1204,36 @@ export default function AbajurKonfigurator({
               )}
             </Bolum>
 
-            <Bolum no="06" baslik="Yüzey deseni">
+            <Bolum no="06" baslik="Delikler" aciklama="Gövdeyi delen kafes deseni. Işık deliklerden geçer, ürün hafifler ve ucuzlar.">
+              <Secim etiket="Kafes" secenekler={DELIKLER} deger={p.delik} onChange={(v) => set("delik", v)} accent={accent} />
+              <p className="akNot">{DELIK_NOTU[p.delik]}</p>
+              {p.delik !== "yok" && (
+                <>
+                  <Kaydirac
+                    etiket="Delik boyu" birim=" mm" deger={p.delikBoyu}
+                    min={8} max={45} onChange={(v) => set("delikBoyu", v)} accent={accent}
+                    ipucu="Hücrelerin yaklaşık büyüklüğü. Küçük değer daha sık, dantel gibi bir kafes verir."
+                  />
+                  <Kaydirac
+                    etiket="Çubuk kalınlığı" birim=" mm" deger={p.cubukKalinlik}
+                    min={1.5} max={8} adim={0.1} onChange={(v) => set("cubukKalinlik", v)} accent={accent}
+                    ipucu="Delikler arasında kalan malzeme. 2 mm altı kırılgan olur."
+                  />
+                  {p.delik === "organik" && (
+                    <button
+                      type="button"
+                      className="akMiniBtn"
+                      style={{ width: "100%", marginTop: 4 }}
+                      onClick={() => set("delikTohum", 1 + Math.floor(Math.random() * 9999))}
+                    >
+                      Deseni değiştir (tohum {p.delikTohum})
+                    </button>
+                  )}
+                </>
+              )}
+            </Bolum>
+
+            <Bolum no="07" baslik="Yüzey deseni">
               <Secim etiket="Desen" secenekler={DESENLER} deger={p.desen} onChange={(v) => set("desen", v)} accent={accent} />
               {p.desen !== "duz" && (
                 <>
@@ -1193,7 +1254,7 @@ export default function AbajurKonfigurator({
             </Bolum>
 
             <Bolum
-              no="07"
+              no="08"
               baslik="Duvar kalınlığı"
               aciklama="Kalınlık, yazıcının bastığı hat genişliğinin tam katı seçilir; böylece istenen et payı birebir çıkar."
             >
@@ -1236,13 +1297,14 @@ export default function AbajurKonfigurator({
           </div>
         )}
 
-        <Bolum no={detay ? "08" : "05"} baslik="Üretim özeti">
+        <Bolum no={detay ? "09" : "05"} baslik="Üretim özeti">
           <div className="akOzet">
             {[
               ["Dış ölçü", `Ø${Math.round(enBuyukCap)} × ${p.yukseklik} mm`],
               ["Ağırlık", `${gram.toFixed(0)} g`],
               ["Baskı süresi", `~${sureSaat.toFixed(1)} saat`],
               ["Duvar", `${duvarSayisi(p.cidar)} duvar · ${p.cidar.toFixed(2).replace(".", ",")} mm`],
+              ["Kafes", p.delik === "yok" ? "Yok — kapalı gövde" : `${DELIKLER.find((x) => x.id === p.delik)?.ad} · çubuk ${p.cubukKalinlik} mm`],
               ["Duy", `${p.duyTipi} · Ø${duy.gecmeCap} mm geçme · ${duy.ayakSayisi} taşıyıcı`],
               ["Paket", PAKETLER[p.paket].ad],
             ].map(([k, v]) => (
