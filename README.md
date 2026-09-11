@@ -44,14 +44,38 @@ belirgin biçimde hafifler ve ucuzlar.
 | **Petek** | Düzgün altıgen hücreler | Hücre tavanlarında kısa köprü |
 | **Organik** | Düzensiz Voronoi hücreleri | Hücre tavanlarında kısa köprü |
 
-Ø180 × 250 mm gövdede ölçülen (çubuk 2,5 mm):
+Ø180 × 250 mm gövdede ölçülen (çubuk 4,6 mm — bu gövdenin alt sınırı):
 
 | | Ağırlık | Baskı | Fiyat |
 |---|---|---|---|
-| Kapalı | 262 g | 14,6 sa | 2.122 ₺ |
-| Elmas | 93 g | 5,0 sa | 1.150 ₺ |
-| Organik | 84 g | 4,3 sa | 1.000 ₺ |
-| Petek | 76 g | 3,9 sa | 919 ₺ |
+| Kapalı | 240 g | 13,4 sa | 1.986 ₺ |
+| Elmas | 164 g | 9,2 sa | 1.513 ₺ |
+| Organik | 145 g | 8,1 sa | 1.397 ₺ |
+| Petek | 136 g | 7,6 sa | 1.340 ₺ |
+
+### Çubuk neden gövdeye göre kalınlaşıyor
+
+Kafes, kabuğu tarayan bir ızgara üzerinden kesiliyor. Çubuk bir ızgara
+hücresinden darsa yer yer hiç örneklenmiyor ve kafes **lif lif kopuk** çıkıyor
+(ölçülen kusur: çubuk/hücre oranı 0,57). Izgarayı sıklaştırmak üçgen sayısını
+**kare olarak** büyütür ve dosya Vercel'in 4,5 MB sınırını aşar — yani her
+gövdede her incelikte kafes üretilemez.
+
+Bu yüzden çubuğun alt sınırı gövdeden türetiliyor ve **konfigüratörde
+uygulanıyor**: müşteri parçalanmış bir tasarım kuramıyor, kaydıracın tabanı
+o gövdenin üretilebilir en ince çubuğunda duruyor ve altında nedenini
+açıklayan bir not çıkıyor.
+
+| Gövde | En ince çubuk |
+|---|---|
+| Ø120 × 160 (E14) | 3,0 mm |
+| Ø150 × 190 | 3,7 mm |
+| Ø180 × 250 | 4,6 mm |
+| Ø230 × 254 | 5,3 mm |
+
+Daha ince bir kafes isteyen müşteri gövdeyi küçültüyor. Hesap
+`enAzCubukKalinligi()` içinde; oran güvencesi (`CUBUK_HUCRE_ORANI = 2,5`)
+teste bağlı.
 
 ### Nasıl çalışıyor
 
@@ -69,12 +93,26 @@ açıyordu. Üçgende bu belirsizlik yok.
 
 ### Üretim güvenceleri
 
-- **Ağ su geçirmez kalır.** 18 senaryo (üç desen × altı gövde) kenar bazında
-  doğrulanıyor. Delik yan duvarları kabuğun iç ve dış yüzeyini kapatır.
+- **Ağ su geçirmez kalır.** Üç desen × altı gövde kenar bazında doğrulanıyor
+  (elde 270 senaryoya kadar tarandı: üç kalite × üç desen × on gövde × üç çubuk).
+  Delik yan duvarları kabuğun iç ve dış yüzeyini kapatır.
+- **Çubuk her zaman çözülür.** Çubuğun karşısına en az iki ızgara hücresi
+  düşer; önizleme ve üretim kalitelerinde teste bağlı. Kafes hiçbir gövdede
+  parçalanmış görünmez.
+- **Kontur köşeye denk gelse de ağ kapanır.** Alan bir ızgara köşesinde sıfıra
+  yaklaşırsa o köşeye bakan iki kenar mikron mertebesinde ayrı iki düğüm
+  üretiyordu; "aynı nokta mı" sorusu yuvarlamaya kalınca ağ açılıyordu
+  (ölçüldü: fıçı gövde + elmas kafes, 4 açık kenar). Köşe artık 0,02 mm katı
+  sayılıyor — kaynak toleransının 20 katı.
+- **Fiyat basılacak ağırlığı gösterir.** Kaba fiyat ızgarası kafesin
+  malzemesini %7'ye kadar şaşırıyordu; delik bütçesi ayrılınca sapma %1,3'e
+  indi (teste bağlı: %2 tavan).
 - **Üst yaka ve alt halka daima katı.** Taşıyıcı ayaklar ve halkalar delinmiyor;
   delikler yalnızca aradaki bantta açılıyor.
 - **Boş katman oluşmuyor.** Her Z yüksekliğinde kesit kontrol ediliyor.
-- **Çubuk kalınlığı tutuyor.** 2 mm altında iş emri kırılganlık uyarısı verir.
+- **Çubuk kalınlığı tutuyor.** Ölçülen kalınlık uygulanan değeri ±0,06 mm
+  tutar. 2 mm altına yalnızca en küçük gövdelerde inilebiliyor; orada iş emri
+  kırılganlık uyarısı verir.
 - **Belirlenimci.** Organik desendeki rastgelelik `delikTohum` ile tohumlanır;
   aynı sipariş aylar sonra da aynı modeli verir. Petek tohumdan bağımsızdır.
 

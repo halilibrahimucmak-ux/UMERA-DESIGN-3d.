@@ -23,8 +23,10 @@ import {
   duvarSayisi,
   cidarKirp,
   olcum,
+  ortalamaYaricap,
   YOGUNLUK,
 } from "../../lib/abajur-geometri.mjs";
+import { enAzCubukKalinligi } from "../../lib/abajur-delik.mjs";
 
 /* ------------------------------------------------------------------ *
  *  ABAJUR KONFİGÜRATÖRÜ
@@ -487,13 +489,18 @@ export default function AbajurKonfigurator({
     const belPay = p.profil === "fici" ? p.bel : 0;
     const capTavan = Math.max(80, Math.floor(TABLA_CAP - PAY.cap - 2 * (desenPay + belPay)));
     const enBuyukCapAyari = Math.max(p.altCap, p.ustCap);
+    /* Kafeste çubuk alt sınırı gövde boyutuna bağlı: gövde büyüdükçe aynı
+       üçgen bütçesiyle taranan ızgara kabalaşır, çubuk da o ızgarada
+       çözülebilecek kadar kalın olmalı. İnceye izin verilseydi çubuk iki
+       örnek arasına sığar ve kafes lif lif kopuk çıkardı. */
     return {
       capMax: capTavan,
+      cubukMin: enAzCubukKalinligi(p.yukseklik, ortalamaYaricap(p), KALITE.uretim.delikButcesi),
       yukseklikMax: TABLA.z - PAY.yukseklik,
       derinlikMax: Math.max(0.5, Math.min(12, (TABLA_CAP - PAY.cap - enBuyukCapAyari) / 2 - belPay)),
       belMax: Math.max(0, Math.min(60, (TABLA_CAP - PAY.cap - enBuyukCapAyari) / 2 - desenPay)),
     };
-  }, [p.desen, p.derinlik, p.profil, p.bel, p.altCap, p.ustCap]);
+  }, [p.desen, p.derinlik, p.profil, p.bel, p.altCap, p.ustCap, p.yukseklik]);
 
   useEffect(() => {
     setP((o) => {
@@ -503,6 +510,8 @@ export default function AbajurKonfigurator({
         yukseklik: Math.min(o.yukseklik, sinir.yukseklikMax),
         derinlik: Math.min(o.derinlik, sinir.derinlikMax),
         bel: Math.min(o.bel, sinir.belMax),
+        // Gövde büyüyünce ince çubuk artık üretilemez; kaydıracı takip ettir.
+        cubukKalinlik: Math.max(o.cubukKalinlik, sinir.cubukMin),
       };
       return Object.keys(y).some((k) => y[k] !== o[k]) ? { ...o, ...y } : o;
     });
@@ -1216,9 +1225,15 @@ export default function AbajurKonfigurator({
                   />
                   <Kaydirac
                     etiket="Çubuk kalınlığı" birim=" mm" deger={p.cubukKalinlik}
-                    min={1.5} max={8} adim={0.1} onChange={(v) => set("cubukKalinlik", v)} accent={accent}
-                    ipucu="Delikler arasında kalan malzeme. 2 mm altı kırılgan olur."
+                    min={sinir.cubukMin} max={8} adim={0.1} onChange={(v) => set("cubukKalinlik", v)} accent={accent}
+                    ipucu={`Delikler arasında kalan malzeme. Bu gövdede en ince ${sinir.cubukMin} mm üretilebilir: daha incesi hem kırılgan olur hem kafes düzgün çıkmaz.`}
                   />
+                  {sinir.cubukMin > 1.5 && (
+                    <p className="akNot">
+                      Bu boyda gövde için çubuk en az <strong>{sinir.cubukMin} mm</strong>.
+                      Daha ince bir kafes istiyorsanız gövdeyi küçültün.
+                    </p>
+                  )}
                   {p.delik === "organik" && (
                     <button
                       type="button"

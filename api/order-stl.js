@@ -11,7 +11,9 @@ export const config = { maxDuration: 60 };
 /* Vercel serverless fonksiyonlarında yanıt gövdesi 4.5 MB ile sınırlı.
    Sıkıştırılmış çıktıyı bunun altında tutuyoruz; aşarsa üçgen bütçesini
    düşürüp bir kez daha üretiyoruz. Böylece indirme her tasarımda çalışır. */
-const GUVENLI_SINIR = 3_800_000;
+// Vercel siniri 4.5 MB. Olculen en kotu delikli model 3.65 MB; 4.1 MB
+// esik %9 pay birakiyor ve gereksiz yeniden uretimi (kalite dususu) onluyor.
+const GUVENLI_SINIR = 4_100_000;
 const CHUNK = 64 * 1024;
 
 export default async function handler(req, res) {

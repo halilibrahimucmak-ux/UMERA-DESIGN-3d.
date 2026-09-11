@@ -3,10 +3,12 @@ import assert from 'node:assert/strict';
 
 import {
   abajurGeometrisi, manifoldKontrol, hacimHesapla, ortalamaYaricap,
-  KALITE, YAKA_YUKSEKLIGI, HAT_GENISLIGI,
+  KALITE, YAKA_YUKSEKLIGI, HAT_GENISLIGI, cozunurluk, olcum,
 } from '../lib/abajur-geometri.mjs';
-import { DELIK_DESENLERI, delikAlani, delikAlaniFonksiyonu, CUBUK_ARALIK } from '../lib/abajur-delik.mjs';
-import { normalizeAbajurConfig, quoteAbajur } from '../lib/abajur.js';
+import {
+  DELIK_DESENLERI, delikAlani, delikAlaniFonksiyonu, CUBUK_ARALIK, CUBUK_HUCRE_ORANI,
+} from '../lib/abajur-delik.mjs';
+import { normalizeAbajurConfig, quoteAbajur, enAzCubuk } from '../lib/abajur.js';
 import { uret } from '../lib/siparis-stl.mjs';
 
 const DESENLER = ['elmas', 'petek', 'organik'];
@@ -37,10 +39,12 @@ test('delik desenleri su geçirmez ağ üretir', () => {
   }
 });
 
-test('çubuk kalınlığı istenen ölçüyü tutar', () => {
+test('çubuk kalınlığı uygulanan ölçüyü tutar', () => {
   for (const delik of DESENLER) {
-    for (const cubuk of [2, 3, 4.5]) {
-      const p = ayar({ delik, cubukKalinlik: cubuk });
+    for (const istenen of [2, 3, 4.5, 6.5]) {
+      const p = ayar({ delik, cubukKalinlik: istenen });
+      // Gövde büyükse normalizasyon çubuğu yükseltir; alan o yeni ölçüyü tutmalı.
+      const cubuk = p.cubukKalinlik;
       const { f } = delikAlaniFonksiyonu(p, Math.min(YAKA_YUKSEKLIGI, p.yukseklik * 0.22), ortalamaYaricap(p));
       // f, çubuk ekseninde en büyük değerine (yarı kalınlık) ulaşır
       let enBuyuk = 0;
@@ -120,11 +124,20 @@ test('petek tohumdan bağımsızdır (düzgün ızgara)', () => {
 });
 
 test('delikler malzemeyi ve fiyatı belirgin düşürür', () => {
+  /* Eşik 0.70 değil 0.75: çubuk alt sınırı zorunlu olunca (bkz. "gövdeye
+     sığmayan ince çubuk isteği yükseltilir") varsayılan gövdede çubuk 4.8 mm
+     oluyor ve elmas kafes malzemenin %28'ini alıyor — petek ve organik %38-42.
+     Parçalanmış ince kafesin yerini alan gerçekçi değer bu. */
   const kapali = quoteAbajur({ desen: 'duz', delik: 'yok' });
   for (const delik of DESENLER) {
     const delikli = quoteAbajur({ desen: 'duz', delik });
-    assert.ok(delikli.gram < kapali.gram * 0.7, `${delik}: ağırlık yeterince düşmedi (${delikli.gram}g / ${kapali.gram}g)`);
+    assert.ok(delikli.gram < kapali.gram * 0.75, `${delik}: ağırlık yeterince düşmedi (${delikli.gram}g / ${kapali.gram}g)`);
     assert.ok(delikli.birim < kapali.birim, `${delik}: fiyat düşmedi`);
+
+    // Kalın çubuk daha az malzeme eksiltir — fiziksel yön korunmalı.
+    const kalin = quoteAbajur({ desen: 'duz', delik, cubukKalinlik: CUBUK_ARALIK[1] });
+    assert.ok(kalin.gram > delikli.gram, `${delik}: kalın çubuk daha hafif çıktı`);
+    assert.ok(kalin.gram < kapali.gram, `${delik}: en kalın çubukta bile kapalıdan hafif olmalı`);
   }
 });
 
@@ -152,22 +165,96 @@ test('delikli modelde boş katman oluşmaz', () => {
   }
 });
 
+test('çubuk ızgarada her zaman çözülür', () => {
+  /* Kusur: çubuk bir ızgara hücresinden darsa yer yer hiç örneklenmiyor ve
+     kafes lif lif kopuk çıkıyordu (ölçülen oran 0.57). Çubuğun karşısına en
+     az 2 hücre düşmeli — altına inerse müşteri parçalanmış model görür. */
+  // 'fiyat' profili müşteriye gösterilmez, sadece ağırlık kestirir; onun
+  // ölçüsü aşağıdaki ayrı testte (fiyat doğruluğu) tutuluyor.
+  for (const kalite of ['onizleme', 'uretim']) {
+    for (const delik of DESENLER) {
+      for (const [ad, ek] of SENARYOLAR) {
+        for (const istenen of [1.5, 2.5, 6]) {
+          const p = ayar({ ...ek, delik, cubukKalinlik: istenen });
+          const { N, R } = cozunurluk(p, KALITE[kalite]);
+          const hucre = Math.max((2 * Math.PI * ortalamaYaricap(p)) / N, p.yukseklik / R);
+          const oran = p.cubukKalinlik / hucre;
+          assert.ok(
+            oran >= 2,
+            `${kalite}/${delik}/${ad} çubuk ${istenen}: oran ${oran.toFixed(2)} — kafes parçalanır`
+          );
+        }
+      }
+    }
+  }
+});
+
+test('kafeste fiyat, basılacak ağırlığı doğru kestirir', () => {
+  /* Kusur: kaba fiyat ızgarası kafesin malzemesini %7'ye kadar şaşırıyordu
+     — müşteri fazla öder ya da satıcı zarar eder. Gösterilen fiyat, gerçekte
+     basılacak modele dayanmalı. */
+  for (const delik of DESENLER) {
+    for (const [ad, ek] of SENARYOLAR) {
+      for (const istenen of [1.5, 3, 6]) {
+        const p = ayar({ ...ek, delik, cubukKalinlik: istenen });
+        const fiyatHacmi = olcum(p, KALITE.fiyat).hacimCm3;
+        const gercekHacim = olcum(p, KALITE.uretim).hacimCm3;
+        const sapma = Math.abs(fiyatHacmi - gercekHacim) / gercekHacim;
+        assert.ok(
+          sapma < 0.02,
+          `${delik}/${ad}/çubuk ${p.cubukKalinlik}: fiyat hacmi %${(sapma * 100).toFixed(1)} sapıyor`
+        );
+      }
+    }
+  }
+});
+
+test('gövdeye sığmayan ince çubuk isteği yükseltilir', () => {
+  // "İzin vermemeli": müşteri çözülemeyecek kadar ince bir kafes kuramaz.
+  for (const [ad, ek] of SENARYOLAR) {
+    const p = ayar({ ...ek, delik: 'elmas', cubukKalinlik: CUBUK_ARALIK[0] });
+    assert.equal(p.cubukKalinlik, enAzCubuk(p), `${ad}: alt sınır uygulanmadı`);
+    assert.ok(p.cubukKalinlik >= CUBUK_ARALIK[0]);
+  }
+  // Kapalı gövdede böyle bir kısıt yok.
+  assert.equal(normalizeAbajurConfig({ delik: 'yok', cubukKalinlik: 1.5 }).cubukKalinlik, 1.5);
+  // Zaten yeterince kalın bir istek olduğu gibi kalır.
+  assert.equal(ayar({ delik: 'elmas', cubukKalinlik: 7 }).cubukKalinlik, 7);
+});
+
+test('kontur ızgara köşesine denk geldiğinde ağ açılmaz', () => {
+  /* Gerileme: fıçı gövde + elmas kafeste alan bir ızgara köşesinde sıfıra
+     çok yaklaşıyordu. Köşeye bakan iki kenar mikron mertebesinde ayrı iki
+     düğüm üretiyor, "aynı nokta mı" sorusu yuvarlamaya kalıyor ve ağ 4
+     kenarda açılıyordu (çift duyarlıkta aynı, float32'de ayrı çıkan y =
+     40.0005 çifti ölçüldü). */
+  const p = ayar({ profil: 'fici', bel: 20, altCap: 170, ustCap: 170, delik: 'elmas', cubukKalinlik: 2.5 });
+  const k = manifoldKontrol(abajurGeometrisi(p, KALITE.uretim));
+  assert.equal(k.kapali, true, `açık=${k.acikKenar} ters=${k.tersSarim} dejenere=${k.dejenereUcgen}`);
+});
+
 test('yapılandırma alanları doğrulanır', () => {
   assert.equal(normalizeAbajurConfig({ delik: 'bilinmeyen' }).delik, 'yok');
   assert.equal(normalizeAbajurConfig({}).delik, 'yok');
   assert.ok(DELIK_DESENLERI.includes(normalizeAbajurConfig({ delik: 'petek' }).delik));
 
-  // çubuk kalınlığı güvenli aralığa sıkışır
+  // çubuk kalınlığı güvenli aralığa sıkışır (kapalı gövdede alt sınır yok)
   assert.equal(normalizeAbajurConfig({ cubukKalinlik: 0.1 }).cubukKalinlik, CUBUK_ARALIK[0]);
   assert.equal(normalizeAbajurConfig({ cubukKalinlik: 99 }).cubukKalinlik, CUBUK_ARALIK[1]);
   assert.equal(normalizeAbajurConfig({ cubukKalinlik: '2,8' }).cubukKalinlik, 2.8, 'virgüllü yazım kabul edilmeli');
+  assert.ok(CUBUK_HUCRE_ORANI >= 2, 'çubuk başına en az 2 hücre düşmeli');
 
   assert.equal(normalizeAbajurConfig({ delikTohum: 7.6 }).delikTohum, 8);
   assert.equal(normalizeAbajurConfig({ delikBoyu: 1000 }).delikBoyu, 45);
 });
 
 test('ince çubuk iş emrinde uyarı verir', () => {
-  const p = normalizeAbajurConfig({ desen: 'duz', delik: 'elmas', cubukKalinlik: 1.6 });
+  // Uyarı eşiği 2 mm; bunun altına ancak en küçük gövdede inilebiliyor.
+  const p = normalizeAbajurConfig({
+    desen: 'duz', delik: 'elmas', cubukKalinlik: 1.6,
+    duyTipi: 'E14', altCap: 80, ustCap: 80, yukseklik: 80,
+  });
+  assert.ok(p.cubukKalinlik < 2, `bu gövdede çubuk 2 mm altına inmiyor: ${p.cubukKalinlik}`);
   const { isEmri } = uret({ config: p });
   assert.ok(
     isEmri.uyarilar.some(u => /kafes kırılgan/.test(u)),
