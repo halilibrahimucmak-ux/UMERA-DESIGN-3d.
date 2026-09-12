@@ -221,7 +221,7 @@ const FIYAT = {
 function isikHaritasiEkle(geo, p, gecirgen) {
   const pos = geo.attributes.position.array;
   const nor = geo.attributes.normal.array;
-  const { N, R, OUT, IN } = geo.userData.bolum;
+  const { OUT, IN, ADIM } = geo.userData.bolum;
   const sayi = pos.length / 3;
   const isik = new Float32Array(sayi);
 
@@ -231,22 +231,26 @@ function isikHaritasiEkle(geo, p, gecirgen) {
   // sönümleme boyu — kalın duvar ve koyu renk ışığı daha çok yutar
   const lambda = 0.55 + 1.35 * gecirgen;
 
-  for (let r = 0; r <= R; r++) {
-    for (let c = 0; c < N; c++) {
-      const vi = OUT + r * N + c;
-      const k = vi * 3;
-      const dx = pos[k] - 0;
-      const dy = pos[k + 1] - by;
-      const dz = pos[k + 2] - 0;
-      const d = Math.hypot(dx, dy, dz) || 1;
-      const cos = Math.max(0, (nor[k] * dx + nor[k + 1] * dy + nor[k + 2] * dz) / d);
-      // eğik geliş -> duvar içinde daha uzun yol
-      const yol = p.cidar / Math.max(cos, 0.18);
-      const gecis = Math.exp(-yol / lambda);
-      isik[vi] = Math.min(2.2, ((cos / (d * d)) * ref * gecis) / 0.42);
-      isik[IN + r * N + c] = 0.1; // iç yüzey doğrudan aydınlanıyor
-    }
+  /* Her köşe tek tek taranıyor; (satır, sütun) ile adreslenmiyor.
+     Kafes desenlerinde gövde artık düzgün bir ızgara değil: delik
+     kenarlarında ızgarada karşılığı olmayan ek köşeler var. Izgara
+     adresiyle yazıldığında bu köşeler ve üst satırlar hiç ışık almıyor,
+     lambanın üst yarısı sönük kalıyordu. Dış/iç köşeler ikişerli üretildiği
+     için dizilim OUT, IN, OUT, IN... şeklinde ilerliyor (bkz. noktaEkle). */
+  for (let vi = OUT; vi < sayi; vi += ADIM) {
+    const k = vi * 3;
+    const dx = pos[k] - 0;
+    const dy = pos[k + 1] - by;
+    const dz = pos[k + 2] - 0;
+    const d = Math.hypot(dx, dy, dz) || 1;
+    const cos = Math.max(0, (nor[k] * dx + nor[k + 1] * dy + nor[k + 2] * dz) / d);
+    // eğik geliş -> duvar içinde daha uzun yol
+    const yol = p.cidar / Math.max(cos, 0.18);
+    const gecis = Math.exp(-yol / lambda);
+    isik[vi] = Math.min(2.2, ((cos / (d * d)) * ref * gecis) / 0.42);
   }
+  for (let vi = IN; vi < sayi; vi += ADIM) isik[vi] = 0.1; // iç yüzey doğrudan aydınlanıyor
+
   geo.setAttribute("aIsik", new THREE.BufferAttribute(isik, 1));
   return geo;
 }
