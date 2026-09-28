@@ -570,3 +570,57 @@ Gerekli Vercel Blob değişkenleri:
 - Konfigüratör ayrı pakete alındı: ana paket 767 KB'tan 241 KB'a (gzip 76 KB) indi.
 - Katalogda yükleme iskeletleri, ağ hatalarında anlaşılır mesajlar.
 - Yönetici panelinde her tasarım için Bambu Studio ayarlarını gösteren **İş emri** ekranı.
+
+## Shopier kataloğu
+
+Shopier mağazasındaki ürünler sitenin kataloğunda, kendi ürünlerinin yanında
+listelenir. **Ödeme Shopier'de kalır:** kartta "Shopier'de Al" düğmesi müşteriyi
+ürünün Shopier sayfasına götürür, bu ürünler sepete girmez.
+
+Böyle kurulmasının sebebi tek bir doğru kaynak bırakmak: stok ve fiyat
+Shopier'de tutulduğu için aynı ürün iki kanaldan satılıp çakışmıyor, müşteri
+kredi kartı/taksit kullanabiliyor ve havale beklemiyor. Abajur ve özel tasarım
+ürünleri mevcut sepet + havale akışında kalır.
+
+### Kurulum
+
+1. Shopier > **Account > Security**'den iki faktörlü doğrulamayı aç
+   (anahtar oluşturmanın ön koşulu).
+2. **Account > Personal Access Token > Generate** ile anahtarı üret ve kopyala
+   — bir daha gösterilmiyor.
+3. Vercel'de proje ayarlarına `SHOPIER_TOKEN` ortam değişkeni olarak ekle ve
+   yeniden dağıt.
+
+Anahtar Shopier hesabında **tam yetki** verir. Bu yüzden yalnızca sunucu
+tarafında (`lib/shopier.js`) okunur; tarayıcıya gönderilen yanıtta yer almaz ve
+hata kayıtlarına yazılmaz. Depoya asla yazma.
+
+Değişken tanımlı değilse site Shopier olmadan, yalnızca kendi ürünleriyle
+çalışır — bir şey bozulmaz.
+
+### Nasıl çalışıyor
+
+`GET https://api.shopier.com/v1/products` sayfa sayfa (50'şer) okunur ve site
+katalog biçimine çevrilir:
+
+| Shopier | Site |
+|---|---|
+| `title` | ürün adı |
+| `description` | açıklama (HTML düz metne indirgenir) |
+| `priceData.price` / `discountedPrice` | fiyat (indirimliyse ödenecek tutar) |
+| `stockStatus` / `stockQuantity` | stok |
+| `categories[].title` | kategori |
+| `media[]` (`placement` sırasıyla) | görseller |
+
+Notlar:
+
+- **Fiyat metin olarak geliyor ve belgede biçimi yazmıyor.** `"1200"`,
+  `"899,90"`, `"1.299,50"`, `"1,299.50"` biçimlerinin hepsi okunuyor; iki ayraç
+  birden varsa sondaki ondalık sayılır. Çözülemeyen değerde `0 ₺` yazmak yerine
+  kartta "Shopier'de gör" çıkar — yanlış fiyat göstermemek için.
+- **Kuruş yalnızca varsa yazılır.** Tam liraya yuvarlama, 1.299,50 gibi
+  tutarlarda gösterilen fiyatı Shopier'de tahsil edilenden ayırıyordu.
+- Ürün id'leri `shopier:` önekiyle saklanır; Sheets'teki UUID'lerle çakışmaz.
+- Yanıt kenarda 5 dakika önbelleğe alınır. Ödeme Shopier'de yapıldığı ve stok
+  orada yeniden doğrulandığı için bu gecikme satışı yanlış fiyattan bağlamaz.
+- Shopier erişilemezse katalog kendi ürünleriyle çalışmaya devam eder.

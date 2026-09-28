@@ -51,11 +51,33 @@ const DEMO = [
   }
 ];
 
-const money = value => new Intl.NumberFormat('tr-TR', {
-  style: 'currency',
-  currency: 'TRY',
-  maximumFractionDigits: 0
-}).format(Number(value) || 0);
+/* Kuruş yalnızca varsa yazılır. Tam liraya yuvarlamak, Shopier'den gelen
+   1.299,50 gibi tutarlarda gösterilen fiyatı tahsil edilenden ayırıyordu. */
+const money = value => {
+  const n = Number(value) || 0;
+  return new Intl.NumberFormat('tr-TR', {
+    style: 'currency',
+    currency: 'TRY',
+    minimumFractionDigits: Number.isInteger(n) ? 0 : 2,
+    maximumFractionDigits: Number.isInteger(n) ? 0 : 2,
+  }).format(n);
+};
+
+/* Shopier ürünü TRY dışında bir para biriminde olabilir; o zaman kendi
+   biriminde yazılır, yanlış birimde tutar göstermeyelim. */
+const fiyatYaz = (urun) => {
+  // Shopier fiyatı okunamadıysa "0 ₺" yazmak yanlış bilgi olur.
+  if (urun?.fiyatBilinmiyor) return "Shopier'de gör";
+  const birim = urun?.paraBirimi;
+  if (!birim || birim === 'TRY') return money(urun?.price);
+  const n = Number(urun.price) || 0;
+  return new Intl.NumberFormat('tr-TR', {
+    style: 'currency',
+    currency: birim,
+    minimumFractionDigits: Number.isInteger(n) ? 0 : 2,
+    maximumFractionDigits: Number.isInteger(n) ? 0 : 2,
+  }).format(n);
+};
 
 /** Ürünün minimum sipariş adedi — tanımsız/bozuk değerlerde 1. */
 const minAdet = product => Math.max(1, Math.floor(Number(product?.minAdet) || 1));
@@ -192,11 +214,20 @@ function App() {
     }
   });
 
+  /* Katalog iki kaynaktan geliyor: kendi ürünlerimiz (Google Sheets) ve
+     Shopier mağazası. Biri düşerse diğeri listelenmeye devam etmeli, bu
+     yüzden allSettled. Shopier ürünlerinin ödemesi Shopier'de yapılır. */
   const loadProducts = async () => {
     setLoading(true);
     try {
-      const data = await api('/api/products');
-      setProducts(data.length ? data : DEMO);
+      const [kendi, shopier] = await Promise.allSettled([
+        api('/api/products'),
+        api('/api/shopier-urunler'),
+      ]);
+      const siteUrunleri = kendi.status === 'fulfilled' && Array.isArray(kendi.value) ? kendi.value : [];
+      const shopierUrunleri = shopier.status === 'fulfilled' ? (shopier.value?.urunler || []) : [];
+      const hepsi = [...siteUrunleri, ...shopierUrunleri];
+      setProducts(hepsi.length ? hepsi : DEMO);
     } catch {
       setProducts(DEMO);
     } finally {
@@ -277,6 +308,12 @@ function App() {
 
   function add(product) {
     if (product.stock === 0) return;
+    /* Shopier ürününün stoğu ve ödemesi Shopier'de. Sepete alınsaydı sitedeki
+       havale akışına düşer, aynı ürün iki kanaldan satılabilirdi. */
+    if (product.kaynak === 'shopier') {
+      if (product.shopierUrl) window.open(product.shopierUrl, '_blank', 'noopener,noreferrer');
+      return;
+    }
     const enAz = minAdet(product);
     // Stok minimumun altındaysa sipariş karşılanamaz; sepete hiç eklemiyoruz.
     if (product.stock > 0 && product.stock < enAz) {
@@ -874,8 +911,9 @@ function App() {
               <p>{productDetail.description}</p>
               <div className="detailFacts"><span>⏱ 2–5 iş günü*</span><span>⬡ PLA / PETG seçenekleri</span><span>🎨 Renk teyidi</span><span>📦 Güvenli paketleme</span></div>
               <div className="detailPrice">
-                <strong>{money(productDetail.price)}</strong>
-                {kargoAyar.aktif && (
+                <strong className={productDetail.fiyatBilinmiyor ? 'fiyatYok' : undefined}>{fiyatYaz(productDetail)}</strong>
+                {productDetail.listePrice > 0 && <small className="eskiFiyat">{money(productDetail.listePrice)}</small>}
+                {productDetail.kaynak !== 'shopier' && kargoAyar.aktif && (
                   <small className="kargoNot">
                     {`+ ${money(kargoAyar.ucret)} kargo`}
                     {kargoAyar.bedavaEsik > 0 && ` · ${money(kargoAyar.bedavaEsik)} üzeri bedava`}
@@ -888,7 +926,23 @@ function App() {
                   Bu ürün en az <b>{minAdet(productDetail)} adet</b> sipariş edilebilir.
                 </div>
               )}
-              <button className="primary full" disabled={productDetail.stock === 0} onClick={() => { add(productDetail); setProductDetail(null); }}>{productDetail.stock === 0 ? 'Tükendi' : 'Sepete Ekle'}</button>
+              {productDetail.kaynak === 'shopier' ? (
+                productDetail.stock === 0 ? (
+                  <button className="primary full" disabled>Tükendi</button>
+                ) : (
+                  <a
+                    className="primary full shopierBtn"
+                    href={productDetail.shopierUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setProductDetail(null)}
+                  >
+                    Shopier'de Satın Al
+                  </a>
+                )
+              ) : (
+                <button className="primary full" disabled={productDetail.stock === 0} onClick={() => { add(productDetail); setProductDetail(null); }}>{productDetail.stock === 0 ? 'Tükendi' : 'Sepete Ekle'}</button>
+              )}
             </div>
           </div>
         </Modal>
@@ -1462,6 +1516,7 @@ function ProductCard({ product, onAdd, onDetail, onImage, featured = false, karg
           </b>
         )}
         <span>{product.category}</span>
+        {product.kaynak === 'shopier' && <b className="shopierRozet">Shopier</b>}
         {product.stock === 0 && <b className="sold">Tükendi</b>}
       </div>
       <div className="cardBody">
@@ -1470,12 +1525,19 @@ function ProductCard({ product, onAdd, onDetail, onImage, featured = false, karg
         <div className="productMeta"><span>⏱ 2–5 iş günü*</span><span>⬡ Siparişe göre üretim</span></div>
         <div className="cardBottom">
           <div className="fiyatKutu">
-            <strong>{money(product.price)}</strong>
-            {kargoNotu && <small className="kargoNot">{kargoNotu}</small>}
+            <strong className={product.fiyatBilinmiyor ? 'fiyatYok' : undefined}>{fiyatYaz(product)}</strong>
+            {product.listePrice > 0 && <small className="eskiFiyat">{money(product.listePrice)}</small>}
+            {product.kaynak === 'shopier'
+              ? <small className="kargoNot">{product.kargoSaticiOdiyor ? 'Kargo bize ait' : 'Kargo alıcıya ait'}</small>
+              : kargoNotu && <small className="kargoNot">{kargoNotu}</small>}
           </div>
           <div>
             <button className="detailBtn" onClick={() => onDetail(product)}>İncele</button>
-            <button onClick={() => onAdd(product)} disabled={product.stock === 0}>{product.stock === 0 ? 'Tükendi' : 'Sepete Ekle'}</button>
+            {product.kaynak === 'shopier'
+              ? (product.stock === 0
+                  ? <button disabled>Tükendi</button>
+                  : <a className="shopierBtn" href={product.shopierUrl} target="_blank" rel="noopener noreferrer">Shopier'de Al</a>)
+              : <button onClick={() => onAdd(product)} disabled={product.stock === 0}>{product.stock === 0 ? 'Tükendi' : 'Sepete Ekle'}</button>}
           </div>
         </div>
         {enAz > 1 && <div className="minAdetSerit">Bu ürün en az <b>{enAz} adet</b> sipariş edilebilir.</div>}
