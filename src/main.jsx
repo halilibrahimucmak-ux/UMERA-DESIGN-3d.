@@ -214,20 +214,15 @@ function App() {
     }
   });
 
-  /* Katalog iki kaynaktan geliyor: kendi ürünlerimiz (Google Sheets) ve
-     Shopier mağazası. Biri düşerse diğeri listelenmeye devam etmeli, bu
-     yüzden allSettled. Shopier ürünlerinin ödemesi Shopier'de yapılır. */
+  /* katalog=1: kendi ürünlerimiz (Google Sheets) ve Shopier mağazası tek
+     istekte geliyor. Shopier ayrı uçta değil, çünkü Vercel'in Hobby planı
+     dağıtım başına 12 fonksiyona izin veriyor. Shopier ürünlerinin ödemesi
+     Shopier'de yapılır; sepete girmezler. */
   const loadProducts = async () => {
     setLoading(true);
     try {
-      const [kendi, shopier] = await Promise.allSettled([
-        api('/api/products'),
-        api('/api/shopier-urunler'),
-      ]);
-      const siteUrunleri = kendi.status === 'fulfilled' && Array.isArray(kendi.value) ? kendi.value : [];
-      const shopierUrunleri = shopier.status === 'fulfilled' ? (shopier.value?.urunler || []) : [];
-      const hepsi = [...siteUrunleri, ...shopierUrunleri];
-      setProducts(hepsi.length ? hepsi : DEMO);
+      const data = await api('/api/products?katalog=1');
+      setProducts(data.length ? data : DEMO);
     } catch {
       setProducts(DEMO);
     } finally {
@@ -1622,6 +1617,9 @@ function Modal({ title, close, children, wide = false }) {
 }
 
 function AdminPanel({ stats, orders, customOrders, odeme, products, form, setForm, edit, newProduct, editProduct, saveProduct, delProduct, uploadImage, imageUploading, uploadDurum, loadDashboard, logout, updateOrder, notifyOrder }) {
+  /* Shopier ürünleri Shopier panelinden yönetiliyor; buradaki Düzenle/Sil
+     Google Sheets satırına yazdığı için onlarda çalışmaz, listelenmezler. */
+  const kendiUrunler = products.filter(p => p.kaynak !== 'shopier');
   const [customFilter, setCustomFilter] = useState('Tümü');
   const [selectedCustom, setSelectedCustom] = useState(null);
   const [stlLoading, setStlLoading] = useState('');
@@ -1762,7 +1760,7 @@ function AdminPanel({ stats, orders, customOrders, odeme, products, form, setFor
         </div>
       )}
       <div className="stats">{[
-        ['Toplam Ürün', products.length, '📦'],
+        ['Toplam Ürün', kendiUrunler.length, '📦'],
         ['Toplam Sipariş', stats?.totalOrders ?? '—', '🧾'],
         ['Bu Ay', stats?.monthOrders ?? '—', '📅'],
         ['Toplam Ciro', stats ? money(stats.totalRevenue) : '—', '₺'],
@@ -1772,7 +1770,7 @@ function AdminPanel({ stats, orders, customOrders, odeme, products, form, setFor
       ].map(item => <div className="stat" key={item[0]}><span>{item[2]}</span><small>{item[0]}</small><b>{item[1]}</b></div>)}</div>
 
       <div className="adminGrid">
-        <section className="panel"><div className="panelHead"><div><b>Ürün Yönetimi</b><span>Google Sheets ile senkron</span></div><button className="primary" onClick={newProduct}>+ Yeni Ürün</button></div><div className="productAdmin">{products.map(product => <div className="pRow" key={product.id}><img src={product.image || '/logo-mark.webp'} alt="" /><div><b>{product.name}</b><span>{product.category} · {money(product.price)} · Stok {product.stock}{product.images?.length > 1 ? ` · ${product.images.length} görsel` : ''}{minAdet(product) > 1 ? ` · min ${minAdet(product)} adet` : ''}</span></div><button onClick={() => editProduct(product)}>Düzenle</button><button className="danger" onClick={() => delProduct(product.id)}>Sil</button></div>)}</div></section>
+        <section className="panel"><div className="panelHead"><div><b>Ürün Yönetimi</b><span>Google Sheets ile senkron</span></div><button className="primary" onClick={newProduct}>+ Yeni Ürün</button></div><div className="productAdmin">{kendiUrunler.map(product => <div className="pRow" key={product.id}><img src={product.image || '/logo-mark.webp'} alt="" /><div><b>{product.name}</b><span>{product.category} · {money(product.price)} · Stok {product.stock}{product.images?.length > 1 ? ` · ${product.images.length} görsel` : ''}{minAdet(product) > 1 ? ` · min ${minAdet(product)} adet` : ''}</span></div><button onClick={() => editProduct(product)}>Düzenle</button><button className="danger" onClick={() => delProduct(product.id)}>Sil</button></div>)}</div></section>
         <section className="panel editor"><div className="panelHead"><div><b>{edit ? 'Ürünü Düzenle' : 'Yeni Ürün'}</b><span>Bilgileri girip kaydet</span></div></div><form className="form" onSubmit={saveProduct}><Field label="Ürün adı *" value={form.name} onChange={event => setForm({ ...form, name: event.target.value })} required /><label>Kategori<select value={form.category} onChange={event => setForm({ ...form, category: event.target.value })}>{CATS.filter(item => item !== 'Tümü').map(category => <option key={category}>{category}</option>)}</select></label><div className="two"><Field label="Fiyat (TL) *" type="number" min="0" value={form.price} onChange={event => setForm({ ...form, price: event.target.value })} required /><Field label="Stok *" type="number" min="0" value={form.stock} onChange={event => setForm({ ...form, stock: event.target.value })} required /></div><label>Minimum sipariş adedi <span className="muted">(müşteri bu üründen en az kaç adet almalı — 1 = sınır yok)</span><input type="number" min="1" max="999" value={form.minAdet ?? 1} onChange={event => setForm({ ...form, minAdet: event.target.value })} /></label><label>Ürün Görselleri <span className="muted">(her renk seçeneği için bir fotoğraf — ilk sıradaki kapak olur)</span><input type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={uploadImage} /></label>{imageUploading && <div className="notice">{uploadDurum || 'Görsel yükleniyor…'}</div>}<GorselYonetici images={form.images || []} setImages={liste => setForm({ ...form, images: liste })} /><label>Açıklama<textarea rows="4" value={form.description} onChange={event => setForm({ ...form, description: event.target.value })} /></label><div className="two"><button className="primary">{edit ? 'Değişiklikleri Kaydet' : 'Ürünü Yayınla'}</button><button type="button" className="ghost" onClick={newProduct}>Temizle</button></div></form></section>
       </div>
 

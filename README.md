@@ -621,6 +621,19 @@ Notlar:
 - **Kuruş yalnızca varsa yazılır.** Tam liraya yuvarlama, 1.299,50 gibi
   tutarlarda gösterilen fiyatı Shopier'de tahsil edilenden ayırıyordu.
 - Ürün id'leri `shopier:` önekiyle saklanır; Sheets'teki UUID'lerle çakışmaz.
-- Yanıt kenarda 5 dakika önbelleğe alınır. Ödeme Shopier'de yapıldığı ve stok
-  orada yeniden doğrulandığı için bu gecikme satışı yanlış fiyattan bağlamaz.
-- Shopier erişilemezse katalog kendi ürünleriyle çalışmaya devam eder.
+- Shopier yanıtı süreç içinde 5 dakika önbellekte tutulur. Ödeme Shopier'de
+  yapıldığı ve stok orada yeniden doğrulandığı için bu gecikme satışı yanlış
+  fiyattan bağlamaz.
+- Shopier erişilemezse katalog kendi ürünleriyle çalışmaya devam eder; elde
+  bayat veri varsa o gösterilir.
+- Shopier ürünleri admin panelinde listelenmez — onları Shopier panelinden
+  yönetiyorsun, buradaki Düzenle/Sil Google Sheets satırına yazıyor.
+
+### Neden ayrı bir uç yok
+
+Shopier kataloğu `/api/products?katalog=1` üzerinden geliyor, kendi ucu yok.
+Sebebi Vercel: `api/` altındaki her dosya bir Vercel Function oluyor ve
+**Hobby planı dağıtım başına 12 fonksiyona izin veriyor** (Next.js/SvelteKit
+dışındaki projelerde her uç bire bir eşleşiyor). Ayrı uç sayıyı 13'e çıkarıp
+dağıtımı düşürdü. Yeni bir uç eklemeden önce `ls api/*.js | wc -l` ile say;
+12'yi aşıyorsa ya mevcut bir uca kat ya da Pro'ya geç.
