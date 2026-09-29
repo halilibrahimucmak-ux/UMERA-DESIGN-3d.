@@ -1,7 +1,7 @@
 import { requireAdmin } from '../lib/auth.js';
 import { getProducts, createProduct, updateProduct, deleteProduct } from '../lib/sheets.js';
 import { shopierUrunleriOnbellekli, shopierAktif, sonKaynak, sonHata } from '../lib/shopier.js';
-import { magazaAdi } from '../lib/shopier-magaza.js';
+import { magazaAdi, vitrinDurumu } from '../lib/shopier-magaza.js';
 
 /*
  * Katalog ve ürün yönetimi.
@@ -28,6 +28,7 @@ export default async function handler(req, res) {
           apiAnahtariTanimli: shopierAktif(),
           apiSonDurum: sonHata?.durum ?? null,
           magaza: magazaAdi(),
+          vitrin: vitrinDurumu,
           not: sonKaynak === 'api'
             ? 'Ürünler Shopier API üzerinden geliyor.'
             : sonKaynak === 'vitrin'
