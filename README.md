@@ -582,7 +582,42 @@ Shopier'de tutulduğu için aynı ürün iki kanaldan satılıp çakışmıyor, 
 kredi kartı/taksit kullanabiliyor ve havale beklemiyor. Abajur ve özel tasarım
 ürünleri mevcut sepet + havale akışında kalır.
 
+### Ürün API'si bu hesapta kapalı — katalog vitrinden besleniyor
+
+Shopier `GET /v1/products` isteğini **403 forbidden** ile reddediyor. Bu bir
+kurulum hatası değil, ölçülerek elendi:
+
+| Deneme | Sonuç |
+|---|---|
+| Tokensiz `/products` | `401 authError` → IP/bölge engeli yok |
+| `/orders`, `/categories`, `/balance`, `/webhooks` | **200** → anahtar ve hesap erişimi çalışıyor |
+| `/products` (parametreli/parametresiz 5 varyant) | **403 forbidden** |
+| `/product` (yanlış yol) | `404 notFound` → `/products` doğru yol |
+
+Anahtarın kapsamlarında `products:read` **var** ve süresi 2031'e kadar geçerli.
+Yani yalnızca bu kaynak hesaba kapalı; açılması için Shopier desteğine
+başvurmak gerekiyor.
+
+Bu yüzden katalog, mağazanın **herkese açık vitrin sayfasından** besleniyor
+(`lib/shopier-magaza.js`). Sayfa sunucuda render edildiği için JavaScript
+gerekmiyor. API her istekte önce deneniyor; Shopier erişimi açtığı anda
+kendiliğinden ona dönülür, kod değişikliği gerekmez.
+
+Vitrin yolunun sınırları:
+
+- Açıklama gelmiyor (ürün sayfasında; 19 ayrı istek atmamak için okunmuyor).
+- Stok adedi yok, yalnızca "tükendi" bilgisi var.
+- HTML ayrıştırmak kırılgandır: Shopier şablonunu değiştirirse burası sessizce
+  boş döner ve site kendi ürünleriyle çalışmaya devam eder. `tests/shopier-magaza.test.mjs`
+  bu davranışı da kilitliyor.
+
 ### Kurulum
+
+`SHOPIER_MAGAZA` = vitrin adresindeki mağaza adı (ör. `https://www.shopier.com/UmeraDesign`
+için `UmeraDesign`). Tek başına yeterli — API anahtarı olmadan da çalışır.
+
+`SHOPIER_TOKEN` isteğe bağlı: Shopier ürün erişimini açarsa API tercih edilir.
+Anahtar için:
 
 1. Shopier > **Account > Security**'den iki faktörlü doğrulamayı aç
    (anahtar oluşturmanın ön koşulu).
@@ -600,8 +635,8 @@ Değişken tanımlı değilse site Shopier olmadan, yalnızca kendi ürünleriyl
 
 ### Nasıl çalışıyor
 
-`GET https://api.shopier.com/v1/products` sayfa sayfa (50'şer) okunur ve site
-katalog biçimine çevrilir:
+API açıldığında `GET https://api.shopier.com/v1/products` sayfa sayfa (50'şer)
+okunur ve site katalog biçimine çevrilir:
 
 | Shopier | Site |
 |---|---|

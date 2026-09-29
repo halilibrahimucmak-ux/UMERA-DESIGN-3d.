@@ -1,6 +1,6 @@
 import { requireAdmin } from '../lib/auth.js';
 import { getProducts, createProduct, updateProduct, deleteProduct } from '../lib/sheets.js';
-import { shopierUrunleriOnbellekli, shopierAktif, tokenBicimi, tokenIddialari, shopierSonda, sonHata } from '../lib/shopier.js';
+import { shopierUrunleriOnbellekli, shopierAktif, sonKaynak, sonHata } from '../lib/shopier.js';
 
 /*
  * Katalog ve ürün yönetimi.
@@ -15,42 +15,26 @@ import { shopierUrunleriOnbellekli, shopierAktif, tokenBicimi, tokenIddialari, s
 export default async function handler(req, res) {
   try {
     if (req.method === 'GET') {
-      /* Kurulum teşhisi. Dışarıdan bakınca "anahtar tanımlı değil" ile
-         "anahtar var ama Shopier hata veriyor" aynı görünüyordu: ikisinde de
-         katalog Shopier'siz dönüyor. Bu uç ikisini ayırır. Anahtar ya da
-         Shopier'in hata metni burada yer almaz; yalnızca kaba durum. */
+      /* Kurulum teşhisi: katalog hangi kaynaktan besleniyor, kaç ürün geldi.
+         Anahtarın değeri ya da içeriği burada yer almaz. */
       if (req.query?.shopier === 'durum') {
         res.setHeader('Cache-Control', 'no-store');
-        if (!shopierAktif()) {
-          return res.json({ aktif: false, not: 'SHOPIER_TOKEN tanımlı değil. Ekledikten sonra yeniden dağıtmayı unutma.' });
-        }
-        try {
-          const urunler = await shopierUrunleriOnbellekli();
-          return res.json({
-            aktif: true,
-            calisiyor: true,
-            urunSayisi: urunler.length,
-            not: urunler.length
-              ? 'Bağlantı çalışıyor.'
-              : 'Bağlantı çalışıyor ama Shopier hiç ürün döndürmedi. Mağazada yayında ürün var mı?',
-          });
-        } catch (hata) {
-          const kod = String(hata.message || '');
-          return res.json({
-            aktif: true,
-            calisiyor: false,
-            httpDurum: sonHata?.durum ?? null,
-            shopierYaniti: sonHata?.govde ?? null,
-            anahtarBicimi: tokenBicimi(),
-            anahtarIzinleri: tokenIddialari(),
-            sonda: await shopierSonda(),
-            not: kod === 'SHOPIER_YETKI'
-              ? "Anahtar geçersiz ya da yetkisiz. Shopier'de yeniden üretip Vercel'de güncelle."
-              : kod === 'SHOPIER_HIZ_SINIRI'
-                ? 'Shopier istek sınırına takıldı, birazdan tekrar dene.'
-                : "Shopier'e ulaşılamadı.",
-          });
-        }
+        const urunler = await shopierUrunleriOnbellekli().catch(() => []);
+        const magaza = Boolean(String(process.env.SHOPIER_MAGAZA || '').trim());
+        return res.json({
+          kaynak: sonKaynak,
+          urunSayisi: urunler.length,
+          apiAnahtariTanimli: shopierAktif(),
+          apiSonDurum: sonHata?.durum ?? null,
+          magazaAdiTanimli: magaza,
+          not: sonKaynak === 'api'
+            ? 'Ürünler Shopier API üzerinden geliyor.'
+            : sonKaynak === 'vitrin'
+              ? 'Ürünler mağazanın herkese açık vitrin sayfasından geliyor (API 403 verdiği için).'
+              : magaza || shopierAktif()
+                ? 'Hiç ürün alınamadı. SHOPIER_MAGAZA doğru mu, mağazada yayında ürün var mı?'
+                : 'SHOPIER_TOKEN ve SHOPIER_MAGAZA tanımlı değil.',
+        });
       }
 
       const kendi = await getProducts();
