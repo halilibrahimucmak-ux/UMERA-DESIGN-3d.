@@ -1,6 +1,6 @@
 import { requireAdmin } from '../lib/auth.js';
 import { getProducts, createProduct, updateProduct, deleteProduct } from '../lib/sheets.js';
-import { shopierUrunleriOnbellekli, shopierAktif, tokenBicimi, tokenIddialari, sonHata } from '../lib/shopier.js';
+import { shopierUrunleriOnbellekli, shopierAktif, tokenBicimi, tokenIddialari, shopierSonda, sonHata } from '../lib/shopier.js';
 
 /*
  * Katalog ve ürün yönetimi.
@@ -43,6 +43,7 @@ export default async function handler(req, res) {
             shopierYaniti: sonHata?.govde ?? null,
             anahtarBicimi: tokenBicimi(),
             anahtarIzinleri: tokenIddialari(),
+            sonda: await shopierSonda(),
             not: kod === 'SHOPIER_YETKI'
               ? "Anahtar geçersiz ya da yetkisiz. Shopier'de yeniden üretip Vercel'de güncelle."
               : kod === 'SHOPIER_HIZ_SINIRI'
