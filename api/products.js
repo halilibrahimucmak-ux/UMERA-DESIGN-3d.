@@ -1,6 +1,6 @@
 import { requireAdmin } from '../lib/auth.js';
 import { getProducts, createProduct, updateProduct, deleteProduct } from '../lib/sheets.js';
-import { shopierUrunleriOnbellekli, shopierAktif, sonKaynak, sonHata } from '../lib/shopier.js';
+import { shopierUrunleriOnbellekli, shopierAktif, sonKaynak, sonGuncelleme, sonHata } from '../lib/shopier.js';
 import { magazaAdi, vitrinDurumu } from '../lib/shopier-magaza.js';
 
 /*
@@ -29,10 +29,13 @@ export default async function handler(req, res) {
           apiSonDurum: sonHata?.durum ?? null,
           magaza: magazaAdi(),
           vitrin: vitrinDurumu,
+          anlikGoruntuTarihi: sonGuncelleme,
           not: sonKaynak === 'api'
             ? 'Ürünler Shopier API üzerinden geliyor.'
             : sonKaynak === 'vitrin'
               ? 'Ürünler mağazanın herkese açık vitrin sayfasından geliyor (API 403 verdiği için).'
+              : sonKaynak === 'anlik'
+                ? 'API ve vitrin engelli; ürünler depodaki anlık görüntüden geliyor. Fiyat değişirse: npm run shopier:yenile'
               : 'Hiç ürün alınamadı. Mağaza adı doğru mu, vitrinde yayında ürün var mı?',
         });
       }

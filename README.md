@@ -598,12 +598,37 @@ Anahtarın kapsamlarında `products:read` **var** ve süresi 2031'e kadar geçer
 Yani yalnızca bu kaynak hesaba kapalı; açılması için Shopier desteğine
 başvurmak gerekiyor.
 
-Bu yüzden katalog, mağazanın **herkese açık vitrin sayfasından** besleniyor
-(`lib/shopier-magaza.js`). Sayfa sunucuda render edildiği için JavaScript
-gerekmiyor. API her istekte önce deneniyor; Shopier erişimi açtığı anda
-kendiliğinden ona dönülür, kod değişikliği gerekmez.
+Vitrin sayfası da Vercel'e kapalı: Cloudflare veri merkezi IP'lerini
+engelliyor. `iad1` ve `fra1` bölgelerinin ikisi de **403** alıyor (5887
+baytlık engel sayfası), normal bir bilgisayardan aynı istek **200** ve 19
+ürün dönüyor. Tarayıcı User-Agent'ı da işe yaramadı.
 
-Vitrin yolunun sınırları:
+Bu yüzden katalog **üç kademeli**:
+
+1. **Shopier API** (`lib/shopier.js`) — şu an 403.
+2. **Vitrin sayfası** (`lib/shopier-magaza.js`) — Vercel'den şu an 403,
+   başka bir sunucudan çalışır.
+3. **Depodaki anlık görüntü** (`data/shopier-vitrin.js`) — şu an kullanılan.
+
+Sıra yukarıdan aşağı olduğu için Shopier erişimi açtığı anda canlı veriye
+kendiliğinden dönülür; kod değişikliği gerekmez.
+
+### Anlık görüntüyü yenileme
+
+Ürün, fiyat ya da görsel değişince:
+
+```bash
+npm run shopier:yenile
+```
+
+Vitrini okur, `data/shopier-vitrin.js` dosyasını üretir; commit'leyip
+push'la. Betik senin bilgisayarından çalışır (engellenen Vercel'den değil).
+
+Fiyat bayatlarsa müşteri yanlış tutar **ödemez** — ödeme Shopier'de yapılıyor
+ve orada güncel fiyat tahsil ediliyor. Yine de kartta yanlış tutar
+görünmemesi için satış yaptıkça yenilemekte fayda var.
+
+Yolun sınırları:
 
 - Açıklama gelmiyor (ürün sayfasında; 19 ayrı istek atmamak için okunmuyor).
 - Stok adedi yok, yalnızca "tükendi" bilgisi var.

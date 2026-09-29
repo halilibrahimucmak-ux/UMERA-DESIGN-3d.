@@ -83,3 +83,18 @@ test('mağaza adı ortam değişkeni yoksa varsayılana düşer', () => {
   if (onceki === undefined) delete process.env.SHOPIER_MAGAZA;
   else process.env.SHOPIER_MAGAZA = onceki;
 });
+
+test('depodaki anlık görüntü kullanılabilir durumda', async () => {
+  /* API ve vitrin engelli olduğunda katalog bu dosyadan besleniyor; bozuk
+     ya da boş bir yenileme commit'lenirse site sessizce ürünsüz kalırdı. */
+  const { VITRIN, GUNCELLEME } = await import('../data/shopier-vitrin.js');
+  assert.ok(Array.isArray(VITRIN) && VITRIN.length > 0, 'anlık görüntü boş');
+  assert.ok(!Number.isNaN(Date.parse(GUNCELLEME)), 'geçerli bir tarih taşımalı');
+  for (const u of VITRIN) {
+    assert.match(u.id, /^shopier:\d+$/, `kimlik bozuk: ${u.id}`);
+    assert.ok(u.name, 'adsız ürün var');
+    assert.ok(u.shopierUrl.startsWith('https://www.shopier.com/'), `adres bozuk: ${u.shopierUrl}`);
+    assert.equal(u.kaynak, 'shopier');
+    assert.ok(u.price > 0 || u.fiyatBilinmiyor, `fiyatsız ürün: ${u.name}`);
+  }
+});
