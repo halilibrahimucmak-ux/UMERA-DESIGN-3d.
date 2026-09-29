@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { magazayiAyristir, magazaAdi } from '../lib/shopier-magaza.js';
+import { magazayiAyristir, magazaAdi, katalogBirlestir } from '../lib/shopier-magaza.js';
 
 /* Gerçek vitrin işaretlemesinin küçültülmüş hali: iki ürün, bir de şablonun
    gizli "placeholder" kartı. Kart sınıfı ve data-price biçimi olduğu gibi. */
@@ -97,4 +97,63 @@ test('depodaki anlık görüntü kullanılabilir durumda', async () => {
     assert.equal(u.kaynak, 'shopier');
     assert.ok(u.price > 0 || u.fiyatBilinmiyor, `fiyatsız ürün: ${u.name}`);
   }
+});
+
+const KENDI = {
+  id: 'uuid-1', name: 'Aura Trio', category: 'Aydınlatma', price: 1599, stock: 3,
+  image: 'a.jpg', images: [{ url: 'a.jpg', etiket: 'Beyaz' }, { url: 'b.jpg', etiket: 'Siyah' }],
+  description: 'Üç parçalı set.', active: true, minAdet: 1,
+};
+const SHOPIER = {
+  id: 'shopier:9', kaynak: 'shopier', shopierUrl: 'https://www.shopier.com/UmeraDesign/9',
+  name: 'Aura Trio', category: 'Shopier', price: 1599, stock: 1,
+  image: 's.jpg', images: [{ url: 's.jpg', etiket: '' }], description: '', minAdet: 1,
+};
+
+test('aynı ürün iki kez listelenmez, ödeme Shopier’e gider', () => {
+  /* Satıcı ürünlerini hem Sheets’e hem Shopier’e girmiş; ham birleştirmede
+     her ürün iki kez çıkıyor ve aynı ürün iki kanaldan satılabiliyordu. */
+  const b = katalogBirlestir([KENDI], [SHOPIER]);
+  assert.equal(b.length, 1, 'çakışan ürün tekilleşmeli');
+  assert.equal(b[0].kaynak, 'shopier', 'ödeme Shopier’de yapılmalı');
+  assert.equal(b[0].shopierUrl, SHOPIER.shopierUrl);
+});
+
+test('birleşimde kendi içeriğimiz korunur', () => {
+  // Shopier vitrini açıklama ve çoklu görsel vermiyor; onlar kaybolmamalı.
+  const b = katalogBirlestir([KENDI], [SHOPIER]);
+  assert.equal(b[0].description, 'Üç parçalı set.');
+  assert.equal(b[0].images.length, 2);
+  assert.equal(b[0].images[1].etiket, 'Siyah');
+  assert.equal(b[0].category, 'Aydınlatma', 'kendi kategorimiz "Shopier"e yeğlenir');
+});
+
+test('eşleşmede ad karşılaştırması büyük/küçük harf ve boşluğa takılmaz', () => {
+  const b = katalogBirlestir(
+    [{ ...KENDI, name: '  AURA   trio ' }],
+    [SHOPIER],
+  );
+  assert.equal(b.length, 1);
+});
+
+test('farklı ürünler birleştirilmez', () => {
+  /* Gevşek eşleştirme (içeriyor) yanlış ürünleri birleştirirdi; yalnızca
+     tam ad eşitliği kabul ediliyor. */
+  const b = katalogBirlestir([{ ...KENDI, name: 'Aura' }], [SHOPIER]);
+  assert.equal(b.length, 2, '"Aura" ile "Aura Trio" aynı ürün değil');
+});
+
+test('Shopier’de karşılığı olmayan ürün sepet akışında kalır', () => {
+  const tek = { ...KENDI, id: 'uuid-2', name: 'Sadece Sitede' };
+  const b = katalogBirlestir([tek], [SHOPIER]);
+  assert.equal(b.length, 2);
+  const kalan = b.find(u => u.name === 'Sadece Sitede');
+  assert.notEqual(kalan.kaynak, 'shopier', 'sepete eklenebilmeli');
+});
+
+test('boş girdilerde çökmez', () => {
+  assert.deepEqual(katalogBirlestir([], []), []);
+  assert.equal(katalogBirlestir([KENDI], []).length, 1);
+  assert.equal(katalogBirlestir([], [SHOPIER]).length, 1);
+  assert.equal(katalogBirlestir().length, 0);
 });
