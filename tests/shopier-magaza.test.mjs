@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { magazayiAyristir } from '../lib/shopier-magaza.js';
+import { magazayiAyristir, magazaAdi } from '../lib/shopier-magaza.js';
 
 /* Gerçek vitrin işaretlemesinin küçültülmüş hali: iki ürün, bir de şablonun
    gizli "placeholder" kartı. Kart sınıfı ve data-price biçimi olduğu gibi. */
@@ -67,4 +67,19 @@ test('adı olmayan kart atlanır', () => {
   const eksik = `<div class="product-card shopier--product-card">
     <a href="https://www.shopier.com/UmeraDesign/1"><div class="product-card-price"><div data-price="10,00 TL"></div></div></a></div>`;
   assert.deepEqual(magazayiAyristir(eksik, 'UmeraDesign'), []);
+});
+
+test('mağaza adı ortam değişkeni yoksa varsayılana düşer', () => {
+  /* Ortam değişkeni eklemeyi unutunca katalog sessizce boş kalıyordu.
+     Depo tek mağazaya ait ve vitrin adresi herkese açık olduğu için
+     varsayılan kodda; tanımlıysa ortam değişkeni kazanır. */
+  const onceki = process.env.SHOPIER_MAGAZA;
+  delete process.env.SHOPIER_MAGAZA;
+  assert.equal(magazaAdi(), 'UmeraDesign');
+  process.env.SHOPIER_MAGAZA = 'BaskaMagaza';
+  assert.equal(magazaAdi(), 'BaskaMagaza');
+  process.env.SHOPIER_MAGAZA = '/EgikCizgili/';
+  assert.equal(magazaAdi(), 'EgikCizgili', 'baştaki/sondaki eğik çizgi temizlenmeli');
+  if (onceki === undefined) delete process.env.SHOPIER_MAGAZA;
+  else process.env.SHOPIER_MAGAZA = onceki;
 });

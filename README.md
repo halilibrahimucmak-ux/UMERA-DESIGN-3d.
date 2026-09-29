@@ -613,8 +613,9 @@ Vitrin yolunun sınırları:
 
 ### Kurulum
 
-`SHOPIER_MAGAZA` = vitrin adresindeki mağaza adı (ör. `https://www.shopier.com/UmeraDesign`
-için `UmeraDesign`). Tek başına yeterli — API anahtarı olmadan da çalışır.
+Kurulum gerektirmiyor: mağaza adı kodda varsayılan olarak yazılı
+(`UmeraDesign`), çünkü bu depo tek bir mağazaya ait ve vitrin adresi zaten
+herkese açık. Mağaza adı değişirse `SHOPIER_MAGAZA` ortam değişkeniyle ez.
 
 `SHOPIER_TOKEN` isteğe bağlı: Shopier ürün erişimini açarsa API tercih edilir.
 Anahtar için:

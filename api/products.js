@@ -1,6 +1,7 @@
 import { requireAdmin } from '../lib/auth.js';
 import { getProducts, createProduct, updateProduct, deleteProduct } from '../lib/sheets.js';
 import { shopierUrunleriOnbellekli, shopierAktif, sonKaynak, sonHata } from '../lib/shopier.js';
+import { magazaAdi } from '../lib/shopier-magaza.js';
 
 /*
  * Katalog ve ürün yönetimi.
@@ -20,20 +21,18 @@ export default async function handler(req, res) {
       if (req.query?.shopier === 'durum') {
         res.setHeader('Cache-Control', 'no-store');
         const urunler = await shopierUrunleriOnbellekli().catch(() => []);
-        const magaza = Boolean(String(process.env.SHOPIER_MAGAZA || '').trim());
+
         return res.json({
           kaynak: sonKaynak,
           urunSayisi: urunler.length,
           apiAnahtariTanimli: shopierAktif(),
           apiSonDurum: sonHata?.durum ?? null,
-          magazaAdiTanimli: magaza,
+          magaza: magazaAdi(),
           not: sonKaynak === 'api'
             ? 'Ürünler Shopier API üzerinden geliyor.'
             : sonKaynak === 'vitrin'
               ? 'Ürünler mağazanın herkese açık vitrin sayfasından geliyor (API 403 verdiği için).'
-              : magaza || shopierAktif()
-                ? 'Hiç ürün alınamadı. SHOPIER_MAGAZA doğru mu, mağazada yayında ürün var mı?'
-                : 'SHOPIER_TOKEN ve SHOPIER_MAGAZA tanımlı değil.',
+              : 'Hiç ürün alınamadı. Mağaza adı doğru mu, vitrinde yayında ürün var mı?',
         });
       }
 
